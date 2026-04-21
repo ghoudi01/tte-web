@@ -117,6 +117,7 @@ export default function Register() {
         email: formData.email,
         password: formData.password,
         name: formData.name || undefined,
+        phone: formData.phone || undefined,
       });
 
       // Login immediately so merchant profile data can be persisted server-side.
@@ -133,6 +134,7 @@ export default function Register() {
         email: formData.companyEmail || formData.email,
         phone: formData.companyPhone || formData.phone,
         address: formData.companyAddress || undefined,
+        productTypes: formData.productTypes,
       });
 
       toast.success("تم إنشاء حسابك وملف شركتك بنجاح.");

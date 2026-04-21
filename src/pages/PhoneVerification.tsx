@@ -18,11 +18,14 @@ export default function PhoneVerification() {
   const c = appContent?.phoneVerification;
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneToCheck, setPhoneToCheck] = useState<string | null>(null);
+  const [reportOrderId, setReportOrderId] = useState("");
+  const [reportReason, setReportReason] = useState("");
 
   const checkQuery = trpc.phoneVerification.check.useQuery(
     { phoneNumber: phoneToCheck! },
     { enabled: !!phoneToCheck }
   );
+  const reportVerdictMutation = trpc.phoneVerification.reportVerdict.useMutation();
   const result = checkQuery.data ?? null;
   const isChecking = checkQuery.isFetching;
   const creditsBalance = MOCK_CREDITS_BALANCE;
@@ -46,6 +49,29 @@ export default function PhoneVerification() {
       return;
     }
     setPhoneToCheck(phoneNumber.trim());
+  };
+
+  const handleReportVerdict = async (verdict: "spam" | "not_spam") => {
+    if (!result?.phoneNumber) {
+      toast.error("قم بالتحقق من الرقم أولاً");
+      return;
+    }
+    try {
+      await reportVerdictMutation.mutateAsync({
+        phoneNumber: result.phoneNumber,
+        verdict,
+        orderId: reportOrderId.trim() ? Number(reportOrderId.trim()) : undefined,
+        reason: reportReason.trim() || undefined,
+      });
+      toast.success(
+        verdict === "spam"
+          ? "تم تسجيل هذا الرقم كـ SPAM"
+          : "تم تسجيل هذا الرقم كـ NOT SPAM"
+      );
+      await checkQuery.refetch();
+    } catch (error) {
+      toast.error("فشل حفظ تقييم الرقم");
+    }
   };
 
   useEffect(() => {
@@ -216,6 +242,14 @@ export default function PhoneVerification() {
                       <span className="text-sm text-slate-600">الارتجاعات</span>
                       <span className="font-semibold">{result.rtoCount}</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-slate-600">تقارير SPAM</span>
+                      <span className="font-semibold text-red-600">{result.spamReports}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-slate-600">تقارير NOT SPAM</span>
+                      <span className="font-semibold text-green-600">{result.notSpamReports}</span>
+                    </div>
                   </div>
 
                   <div className={`p-3 rounded-lg border ${getRiskBgColor(result.riskLevel)}`}>
@@ -227,6 +261,41 @@ export default function PhoneVerification() {
                       {result.riskLevel === "high" &&
                         "✗ مخاطر عالية. يُنصح بعدم المتابعة أو طلب دفع مسبق."}
                     </p>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-200 space-y-3">
+                    <p className="text-sm font-semibold text-slate-900">
+                      ساعد النظام: سجل قرارك على هذا الرقم
+                    </p>
+                    <Input
+                      type="number"
+                      value={reportOrderId}
+                      onChange={(e) => setReportOrderId(e.target.value)}
+                      placeholder="رقم الطلب (اختياري)"
+                    />
+                    <Input
+                      value={reportReason}
+                      onChange={(e) => setReportReason(e.target.value)}
+                      placeholder="ملاحظة/سبب (اختياري)"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        disabled={reportVerdictMutation.isPending}
+                        onClick={() => handleReportVerdict("spam")}
+                      >
+                        SPAM
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        disabled={reportVerdictMutation.isPending}
+                        onClick={() => handleReportVerdict("not_spam")}
+                      >
+                        NOT SPAM
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
