@@ -23,7 +23,8 @@ export default function Login() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: () => {
+    onSuccess: (result) => {
+      utils.auth.me.setData(undefined, result.user);
       void utils.auth.me.invalidate();
       setLocation("/dashboard");
     },

@@ -74,9 +74,19 @@ export function useAuth(options?: UseAuthOptions) {
     if (meQuery.isLoading || logoutMutation.isPending) return;
     if (state.user) return;
     if (typeof window === "undefined") return;
-    if (window.location.pathname === resolvedRedirectPath) return;
+    try {
+      const targetUrl = new URL(resolvedRedirectPath, window.location.origin);
+      const currentUrl = new URL(window.location.href);
+      const sameDestination =
+        targetUrl.origin === currentUrl.origin &&
+        targetUrl.pathname === currentUrl.pathname &&
+        targetUrl.search === currentUrl.search;
+      if (sameDestination) return;
+    } catch {
+      if (window.location.pathname === resolvedRedirectPath) return;
+    }
 
-    window.location.href = resolvedRedirectPath;
+    window.location.assign(resolvedRedirectPath);
   }, [
     redirectOnUnauthenticated,
     resolvedRedirectPath,

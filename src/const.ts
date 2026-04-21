@@ -6,10 +6,10 @@ export const UNAUTHED_ERR_MSG = "Unauthorized";
 export const getLoginUrl = () => {
   const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
   const appId = import.meta.env.VITE_APP_ID;
-  if (typeof window === "undefined") return "/";
+  if (typeof window === "undefined") return "/login";
 
   // Fallback to home page when OAuth env vars are not configured.
-  if (!oauthPortalUrl || !appId) return "/";
+  if (!oauthPortalUrl || !appId) return "/login";
 
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
   const state = btoa(redirectUri);
@@ -22,6 +22,6 @@ export const getLoginUrl = () => {
     url.searchParams.set("type", "signIn");
     return url.toString();
   } catch {
-    return "/";
+    return "/login";
   }
 };

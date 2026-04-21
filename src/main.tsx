@@ -19,7 +19,22 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  window.location.href = getLoginUrl();
+  const target = getLoginUrl();
+  try {
+    const targetUrl = new URL(target, window.location.origin);
+    const currentUrl = new URL(window.location.href);
+    const sameDestination =
+      targetUrl.origin === currentUrl.origin &&
+      targetUrl.pathname === currentUrl.pathname &&
+      targetUrl.search === currentUrl.search;
+
+    // Prevent hard-refresh redirect loops when already on target URL.
+    if (sameDestination) return;
+  } catch {
+    // If URL parsing fails, keep the original redirect behavior.
+  }
+
+  window.location.assign(target);
 };
 
 queryClient.getQueryCache().subscribe(event => {
