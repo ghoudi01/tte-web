@@ -28,7 +28,6 @@ import Subscription from "./pages/Subscription";
 import Support from "./pages/Support";
 import PhoneVerificationHistory from "./pages/PhoneVerificationHistory";
 import DashboardLayout from "./components/DashboardLayout";
-import InnovationLab from "./pages/InnovationLab";
 
 function Router() {
   return (
@@ -141,11 +140,6 @@ function Router() {
       <Route path={"/analytics"}>
         <DashboardLayout>
           <Analytics />
-        </DashboardLayout>
-      </Route>
-      <Route path={"/innovation-lab"}>
-        <DashboardLayout>
-          <InnovationLab />
         </DashboardLayout>
       </Route>
       <Route path={"/subscription/upgrade"}>

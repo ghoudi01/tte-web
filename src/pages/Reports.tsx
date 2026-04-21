@@ -10,6 +10,7 @@ import { useLocation } from "wouter";
 import { FileText, Plus, CheckCircle2, Clock, XCircle, Package } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { isValidTunisiaPhone } from "@/lib/phone";
 
 const reportKindOptions = [
   { value: "rto", label: "مرتجع (RTO)" },
@@ -52,9 +53,14 @@ export default function Reports() {
     productDescription: "",
     notes: "",
   });
+  const isValidPhone = formData.phone === "" || isValidTunisiaPhone(formData.phone);
 
   const handleSubmitNew = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidTunisiaPhone(formData.phone)) {
+      toast.error("رقم الهاتف غير صحيح. الرجاء إدخال رقم تونسي صالح.");
+      return;
+    }
     if (!formData.reportKind) {
       toast.error("يرجى اختيار نوع التقرير / الحالة");
       return;
@@ -120,8 +126,12 @@ export default function Reports() {
                         value={formData.phone}
                         onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                         placeholder="+216 XX XXX XXX"
+                        className={!isValidPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                         required
                       />
+                      {!isValidPhone && (
+                        <p className="text-xs text-red-500">الرجاء إدخال رقم تونسي صالح (8 أرقام).</p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="clientAddress">عنوان العميل</Label>

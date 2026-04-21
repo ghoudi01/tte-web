@@ -53,7 +53,7 @@ export function SocialProof() {
             </p>
             <p className="text-sm text-slate-400">
               {socialProof?.subline ??
-                "مبني لتونس والأسواق المماثلة • برنامج تجريبي متاح للمتبنين الأوائل"}
+                "مبني لتونس والأسواق المماثلة"}
             </p>
           </motion.div>
         </motion.div>

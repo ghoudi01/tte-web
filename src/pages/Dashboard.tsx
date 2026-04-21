@@ -9,7 +9,6 @@ import {
   Phone,
   FileText,
   Plug,
-  Sparkles,
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
@@ -33,7 +32,6 @@ export default function Dashboard() {
     { id: "phone-verification", label: "تحقق من رقم", path: "/phone-verification" },
     { id: "reports", label: "إضافة تقرير", path: "/reports" },
     { id: "plugins", label: "إدارة الإضافات", path: "/plugins" },
-    { id: "innovation", label: "أفكار MVP", path: "/innovation-lab" },
   ];
   const actionsToShow: { id: string; label: string; path: string }[] =
     dashboard?.quickActions && dashboard.quickActions.length > 0
@@ -56,7 +54,6 @@ export default function Dashboard() {
     "phone-verification": "تحقق من رقم",
     reports: "إضافة تقرير",
     plugins: "إدارة الإضافات",
-    innovation: "أفكار MVP",
   };
 
   if (dashboardQuery.isLoading || dashboardQuery.isFetching) {
@@ -146,8 +143,8 @@ export default function Dashboard() {
           {actionsToShow.map((action, i) => {
             const label = action.label ?? quickActionLabels[action.id] ?? action.id;
             const path = action.path ?? "/dashboard";
-            const Icon = i === 0 ? Phone : i === 1 ? FileText : i === 2 ? Plug : Sparkles;
-            const variant = i === 0 ? "default" : i === 3 ? "secondary" : "outline";
+            const Icon = i === 0 ? Phone : i === 1 ? FileText : Plug;
+            const variant = i === 0 ? "default" : "outline";
             return (
               <Button
                 key={path + i}

@@ -105,14 +105,15 @@ export default function Login() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setLoginMethod("phone")}
-                      className={`flex-1 py-1.5 px-2 rounded text-xs font-medium transition-colors ${
+                      disabled
+                      className={`flex-1 py-1.5 px-2 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1 cursor-not-allowed ${
                         loginMethod === "phone"
                           ? "bg-white text-slate-900 shadow-sm"
-                          : "text-slate-600 hover:text-slate-900"
+                          : "text-slate-400"
                       }`}
                     >
                       {login?.tabPhone ?? "هاتف"}
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">قريباً</span>
                     </button>
                   </div>
 
@@ -147,7 +148,7 @@ export default function Login() {
                             placeholder={login?.placeholderPassword ?? "••••••••"}
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            className="pr-9 h-9 text-sm"
+                            className="pr-9 pl-9 h-9 text-sm"
                             required
                           />
                           <button

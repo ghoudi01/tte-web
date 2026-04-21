@@ -1,333 +1,357 @@
-import { useState } from "react";
 import { useLocation } from "wouter";
-import { motion } from "framer-motion";
+import { useState } from "react";
 import { Navigation } from "./home/components/Navigation";
 import { Footer } from "./home/components/Footer";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import {
-  ArrowLeft,
-  MessageCircle,
-  ShoppingBag,
-  Zap,
-  Sheet,
-  Bot,
-  Link2,
-  Monitor,
-  Plug,
+  ChevronLeft,
+  CheckCircle2,
+  ChevronDown,
+  Globe,
+  Lightbulb,
+  MessageSquareText,
+  Settings,
+  ShieldCheck,
+  PhoneCall,
   Sparkles,
+  Workflow,
+  Webhook,
 } from "lucide-react";
-import { fadeInUp } from "./home/components/animations";
-import { cn } from "@/lib/utils";
 
-const SOLUTIONS = [
+const SIDEBAR_SECTIONS = [
+  { id: "introduction", label: "نظرة عامة" },
+  { id: "who", label: "لمن هذا الحل؟" },
+  { id: "workflow", label: "آلية العمل" },
   {
-    id: "meta-commerce",
-    title: "متاجر فيسبوك وإنستغرام",
-    subtitle: "Facebook Shops & Instagram Shopping",
-    summary: "ويب هوك من Meta عند كل طلب → إنشاء تلقائي في TTE.",
-    target: "بياعون يستخدمون متاجر فيسبوك أو إنستغرام مع الدفع.",
-    how: "TTE يعرض ويب هوك تستدعيه Meta عند إنشاء أو تحديث الطلب. نستخرج الهاتف والمبلغ والحالة وننشئ الطلب/التقرير تلقائياً.",
-    result: "تلقائي بالكامل. بدون إدخال يدوي.",
-    limitations: "فقط لمن يستخدم Shops/Checkout. بياعو الدردشة فقط لا يحصلون على ويب هوكات.",
-    icon: ShoppingBag,
-    gradient: "from-blue-600 to-indigo-700",
-    automation: "تلقائي كامل",
+    id: "decisions",
+    label: "القرارات",
+    children: [
+      { id: "approve", label: "تأكيد مباشر" },
+      { id: "confirm", label: "تأكيد إضافي" },
+      { id: "deposit", label: "دفعة مقدمة" },
+      { id: "call", label: "تحقق عبر مكالمة" },
+    ],
   },
-  {
-    id: "whatsapp-messaging",
-    title: "واتساب وإنستغرام للرسائل",
-    subtitle: "WhatsApp Business API & Instagram Messaging",
-    summary: "أحداث «طلب مؤكد» من الأداة → استدعاء API TTE.",
-    target: "بياعون يستخدمون واتساب للأعمال أو أدوات مثل ManyChat، Respond.io.",
-    how: "إضافة تشترك في أحداث الطلب. نستخرج الهاتف والمبلغ ونستدعي API TTE.",
-    result: "تلقائي لكل طلب تعرضه الأداة عبر API.",
-    limitations: "يتطلب Business API أو منصة تدعم ويب هوكات.",
-    icon: MessageCircle,
-    gradient: "from-green-600 to-emerald-700",
-    automation: "تلقائي كامل",
-  },
-  {
-    id: "zapier-make",
-    title: "Zapier / Make",
-    subtitle: "TTE Integration",
-    summary: "لصقة في جدول أو نموذج → TTE ينشئ الطلب/التقرير.",
-    target: "أي بائع يوافق على لصق الطلبات في Google Sheet، Airtable، Typeform.",
-    how: "API بمفتاح. المستخدم يبني سيناريو: صف جديد أو إجابة نموذج → TTE ينشئ الطلب.",
-    result: "لصقة واحدة بدل فتح لوحة TTE.",
-    limitations: "خطوة يدوية واحدة (لصق في الجدول/النموذج).",
-    icon: Zap,
-    gradient: "from-amber-500 to-orange-600",
-    automation: "لصقة واحدة",
-  },
-  {
-    id: "sheet-airtable",
-    title: "قالب Google Sheet / Airtable",
-    subtitle: "Template Plugin",
-    summary: "صف جديد في القالب → سكربت يستدعي API TTE.",
-    target: "بياعون مرتاحون لاستخدام جدول أو قاعدة واحدة.",
-    how: "قالب بأعمدة (اسم، هاتف، مبلغ، تاريخ، حالة). سكربت عند صف جديد يستدعي API TTE.",
-    result: "البائع يلصق من الدردشة؛ الإنشاء في TTE تلقائي.",
-    limitations: "نسخ القالب وإضافة مفتاح API مرة واحدة.",
-    icon: Sheet,
-    gradient: "from-green-500 to-teal-600",
-    automation: "لصقة واحدة",
-  },
-  {
-    id: "telegram-whatsapp-bot",
-    title: "بوت تيليجرام أو واتساب",
-    subtitle: "Semi-automatic",
-    summary: "رسالة واحدة مثل: order 21612345678 150 → البوت ينشئ في TTE.",
-    target: "بياعون يفضلون الموبايل وإجراءات سريعة.",
-    how: "بوت يفسر الرسالة ويستدعي API TTE (التاجر مرتبط بمعرف أو مفتاح API).",
-    result: "رسالة واحدة من الهاتف. احتكاك منخفض.",
-    limitations: "رسالة لكل طلب/تقرير؛ صيغة بسيطة موثقة.",
-    icon: Bot,
-    gradient: "from-sky-500 to-blue-600",
-    automation: "رسالة واحدة",
-  },
-  {
-    id: "link-in-bio",
-    title: "رابط في البايو / نموذج مسبوق",
-    subtitle: "Link in Bio / Prefilled Form",
-    summary: "نموذج خفيف أو رابط مسبوق (?phone=...&amount=...) → إرسال بنقرة.",
-    target: "بياعون يريدون رابطاً واحداً يفتحونه من الدردشة.",
-    how: "نموذج: هاتف، مبلغ، نوع التقرير. اختياري: معلمات في الرابط للتعبئة المسبقة.",
-    result: "نقرة من الرابط بدل فتح لوحة التحكم.",
-    limitations: "إجراء يدوي واحد (فتح الرابط وإرسال).",
-    icon: Link2,
-    gradient: "from-violet-500 to-purple-600",
-    automation: "نقرة واحدة",
-  },
-  {
-    id: "browser-extension",
-    title: "إضافة متصفح",
-    subtitle: "Add to TTE from Facebook/Instagram",
-    summary: "نقرة «أضف إلى TTE» في المحادثة → الإضافة ترسل البيانات إلى TTE.",
-    target: "بياعون يديرون الطلبات من سطح المكتب.",
-    how: "إضافة تقرأ النص الظاهر (اسم، هاتف، مبلغ) وتستدعي API TTE بمفتاح مخزّن.",
-    result: "نقرة واحدة من نافذة الدردشة.",
-    limitations: "واجهة Meta قد تتغير؛ اعتبارات ToS وخصوصية.",
-    icon: Monitor,
-    gradient: "from-slate-600 to-slate-800",
-    automation: "نقرة واحدة",
-  },
-  {
-    id: "third-party-dm",
-    title: "أدوات طرف ثالث (DM → طلب)",
-    subtitle: "Third-Party DM to Order",
-    summary: "أداة تصدّر أحداث الطلب → إضافة TTE تشترك وتُنشئ في TTE.",
-    target: "بياعون يستخدمون منتج دردشة-تجارة يدعم ويب هوكات أو API.",
-    how: "المنتج يصدّر «طلب أنشئ» و«مرتجع». إضافة TTE تشترك وتُحوّل إلى طلب/تقرير.",
-    result: "تلقائي بعد ربط التكامل.",
-    limitations: "يعتمد على توفر الأدوات في السوق وجودة API.",
-    icon: Plug,
-    gradient: "from-neutral-600 to-neutral-800",
-    automation: "تلقائي كامل",
-  },
+  { id: "integration-modes", label: "طرق الربط" },
+  { id: "api", label: "بيانات نقطة الربط" },
+  { id: "features", label: "ميزات متقدمة" },
+  { id: "rules", label: "ضوابط الاستخدام" },
+  { id: "cta", label: "البدء الآن" },
 ];
 
-const PRIORITY = [
-  "API إنشاء طلب وتقرير بمفتاح API",
-  "Zapier/Make + قالب Sheet (لصقة واحدة)",
-  "بوت تيليجرام أو واتساب",
-  "ويب هوكات Meta Commerce / Messaging",
+const DECISION_ITEMS = [
+  {
+    id: "approve",
+    title: "تأكيد مباشر",
+    key: "APPROVE",
+    description: "يُستخدم عندما تكون مؤشرات الطلب قوية وواضحة.",
+    customerMessage: "تم تأكيد طلبك بنجاح.",
+  },
+  {
+    id: "confirm",
+    title: "تأكيد إضافي",
+    key: "CONFIRM",
+    description: "يُستخدم عند الحاجة إلى تثبيت بسيط للبيانات.",
+    customerMessage: "يرجى تأكيد صحة المعلومات لإكمال الطلب.",
+  },
+  {
+    id: "deposit",
+    title: "دفعة مقدمة",
+    key: "REQUIRE_DEPOSIT",
+    description: "يُستخدم عندما يتطلب الطلب خطوة ضمان إضافية.",
+    customerMessage: "يرجى دفع مبلغ مقدم بسيط لتأكيد الطلب.",
+  },
+  {
+    id: "call",
+    title: "تحقق عبر مكالمة",
+    key: "VERIFY_CALL",
+    description: "يُستخدم للحالات ذات المخاطر المرتفعة.",
+    customerMessage: "يرجى الرد على مكالمة التحقق لإتمام التأكيد.",
+  },
 ];
 
 export default function PluginsSocialSellers() {
   const [, setLocation] = useLocation();
-  const [openAccordion, setOpenAccordion] = useState<string | undefined>(undefined);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    decisions: true,
+  });
+
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const toggleGroup = (id: string) => {
+    setOpenGroups((prev) => ({ ...prev, [id]: !prev[id] }));
+  };
 
   return (
-    <div className="min-h-screen w-full bg-slate-50/50 text-slate-900" dir="rtl">
+    <div className="min-h-screen w-full bg-white text-slate-900" dir="rtl">
       <Navigation />
-
-      {/* Hero */}
-      <section className="relative min-h-[50vh] flex flex-col justify-center py-24 md:py-32 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_bottom_right,transparent_0%,rgba(20,184,166,0.06)_50%,transparent_100%)]" aria-hidden />
-        <div className="absolute inset-0 opacity-[0.07] bg-[length:48px_48px] bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.4)_1px,transparent_0)] bg-[position:0_0]" style={{ backgroundSize: "48px 48px" }} />
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="flex flex-col md:flex-row md:items-center md:justify-between gap-10"
-          >
-            <div className="max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-teal-300 text-sm font-medium mb-5 border border-white/5">
-                <MessageCircle className="w-4 h-4" />
-                بياعو فيسبوك وإنستغرام
-              </div>
-              <h1 className="text-3xl md:text-4xl lg:text-5xl font-black text-white mb-4 leading-tight tracking-tight">
-                حلول لبياعين بدون موقع
-              </h1>
-              <p className="text-slate-300 text-lg md:text-xl mb-8 leading-relaxed">
-                تبيع عبر الدردشة؟ أفكار تكامل لجعل الطلبات والتقارير تلقائية أو بأقل جهد.
-              </p>
-              <Button
-                size="lg"
-                className="bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-xl px-6 w-fit shadow-lg shadow-teal-500/25 transition-all hover:shadow-teal-500/40 hover:-translate-y-0.5"
-                onClick={() => setLocation("/plugins")}
-              >
-                كل الإضافات
-                <ArrowLeft className="w-4 h-4 mr-2" />
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Solutions */}
-      <section id="solutions-list" className="py-16 md:py-24 scroll-mt-20 w-full bg-white">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="mb-10 text-center md:text-right"
-          >
-            <span className="inline-block w-10 h-0.5 bg-teal-500 rounded-full mb-4" aria-hidden />
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900 mb-2">الحلول المقترحة</h2>
-            <p className="text-slate-600 text-base">انقر على أي حل لمعرفة التفاصيل.</p>
-          </motion.div>
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="w-full"
-          >
-            <Accordion
-              type="single"
-              collapsible
-              value={openAccordion}
-              onValueChange={setOpenAccordion}
-              className="w-full space-y-3"
-            >
-              {SOLUTIONS.map((sol) => (
-                <AccordionItem
-                  key={sol.id}
-                  value={sol.id}
-                  className={cn(
-                    "border-0 rounded-2xl bg-white shadow-md shadow-slate-200/50 overflow-hidden transition-all duration-200",
-                    openAccordion === sol.id && "ring-2 ring-teal-500/20 shadow-lg shadow-teal-500/5"
-                  )}
-                >
-                  <AccordionTrigger className="px-5 py-4 hover:no-underline hover:bg-slate-50/60 [&>svg]:shrink-0 md:px-6 md:py-5 transition-colors rounded-2xl data-[state=open]:bg-slate-50/80 data-[state=open]:rounded-b-none">
-                    <div className="flex items-center gap-3 md:gap-4 text-right flex-1 w-full">
-                      <div
-                        className={cn(
-                          "w-11 h-11 md:w-12 md:h-12 rounded-xl bg-gradient-to-br flex items-center justify-center shrink-0 shadow-inner",
-                          sol.gradient
-                        )}
-                      >
-                        <sol.icon className="w-5 h-5 md:w-6 md:h-6 text-white drop-shadow-sm" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="font-semibold text-slate-900 text-base md:text-lg">{sol.title}</p>
-                        <p className="text-xs md:text-sm text-slate-500 truncate mt-0.5">{sol.summary}</p>
-                      </div>
-                      <Badge variant="secondary" className="bg-teal-50 text-teal-700 border border-teal-200/60 text-xs shrink-0 font-medium">
-                        {sol.automation}
-                      </Badge>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className="px-5 pb-5 pt-0 md:px-6 md:pb-6 bg-slate-50/40">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 text-sm text-slate-600 border-r-2 border-teal-200 pr-4 max-w-4xl">
-                      <p><span className="font-semibold text-slate-700">لمن:</span> {sol.target}</p>
-                      <p><span className="font-semibold text-slate-700">كيف:</span> {sol.how}</p>
-                      <p><span className="font-semibold text-slate-700">النتيجة:</span> {sol.result}</p>
-                      <p className="text-slate-500 md:col-span-2"><span className="font-semibold text-slate-600">القيود:</span> {sol.limitations}</p>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Next steps */}
-      <section className="py-16 md:py-24 bg-slate-50 w-full">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="w-full"
-          >
-            <Card className="w-full border-0 bg-white shadow-lg shadow-slate-200/50 rounded-2xl overflow-hidden">
-              <CardHeader className="pb-4 pt-6 px-6 md:px-8">
-                <CardTitle className="text-lg md:text-xl flex items-center gap-2 text-slate-900">
-                  <span className="flex items-center justify-center w-9 h-9 rounded-xl bg-amber-100 text-amber-600">
-                    <Sparkles className="w-5 h-5" />
-                  </span>
-                  الخطوات القادمة
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-6 pb-8 md:px-8">
-                <ol className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 list-none">
-                  {PRIORITY.map((step, i) => (
-                    <li
-                      key={i}
-                      className="flex items-start gap-3 rounded-xl bg-slate-50 border border-slate-100 px-4 py-3 text-slate-600 text-sm md:text-base transition-colors hover:bg-slate-100/80 hover:border-slate-200"
+      <div className="flex border-t border-slate-200">
+        <aside className="hidden lg:block w-64 shrink-0 border-l border-slate-200 bg-slate-50/50">
+          <ScrollArea className="h-[calc(100vh-5rem)]">
+            <nav className="p-4 space-y-1 text-sm">
+              {SIDEBAR_SECTIONS.map((section) =>
+                "children" in section ? (
+                  <div key={section.id}>
+                    <button
+                      onClick={() => toggleGroup(section.id)}
+                      className="flex items-center justify-between w-full py-2 px-3 rounded-md text-slate-700 hover:bg-slate-200/80 font-medium"
                     >
-                      <span className="flex shrink-0 w-7 h-7 items-center justify-center rounded-full bg-teal-100 text-teal-700 text-xs font-bold">
-                        {i + 1}
-                      </span>
-                      <span>{step}</span>
-                    </li>
-                  ))}
-                </ol>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-      </section>
+                      {section.label}
+                      <ChevronDown
+                        className={`w-4 h-4 transition-transform ${openGroups[section.id] ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {openGroups[section.id] !== false && (
+                      <div className="mr-3 mt-1 space-y-0.5 border-r border-slate-200 pr-2">
+                        {section.children.map((child) => (
+                          <button
+                            key={child.id}
+                            onClick={() => scrollTo(child.id)}
+                            className="flex items-center gap-2 w-full py-1.5 px-3 rounded text-slate-600 hover:bg-slate-200/60 hover:text-slate-900"
+                          >
+                            <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                            {child.label}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    key={section.id}
+                    onClick={() => scrollTo(section.id)}
+                    className="flex items-center gap-2 w-full py-2 px-3 rounded-md text-slate-700 hover:bg-slate-200/80 font-medium text-right"
+                  >
+                    {section.label}
+                  </button>
+                )
+              )}
+            </nav>
+          </ScrollArea>
+        </aside>
 
-      {/* CTA */}
-      <section className="relative py-16 md:py-28 bg-slate-900 w-full overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(20,184,166,0.08)_0%,transparent_50%)]" aria-hidden />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" aria-hidden />
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-10 text-center md:text-right">
-            <div>
-              <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-3 tracking-tight">
-                تبيع على فيسبوك أو إنستغرام؟
-              </h2>
-              <p className="text-slate-300 text-base md:text-lg max-w-xl">
-                سجّل واحصل على مفتاح API أو انتظر الإضافات الجاهزة.
+        <main className="flex-1 min-w-0">
+          <div className="max-w-3xl mx-auto px-4 sm:px-6 py-10 md:py-14">
+            <section id="introduction" className="scroll-mt-24 mb-14">
+              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 mb-4">
+                Social Sellers
+              </h1>
+              <p className="text-slate-600 leading-relaxed mb-4">
+                هذا الحل مخصص للبائعين عبر فيسبوك وإنستغرام الذين يعتمدون على
+                المحادثات لاستقبال الطلبات. الهدف هو تنظيم القرارات قبل الشحن
+                وتقليل الإرجاع مع الحفاظ على تجربة عميل جيدة.
               </p>
-            </div>
-            <div className="flex flex-wrap justify-center md:justify-start gap-4 shrink-0">
-              <Button
-                size="lg"
-                className="bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold rounded-xl px-6 md:px-8 shadow-lg shadow-teal-500/25 transition-all hover:shadow-teal-500/40 hover:-translate-y-0.5"
-                onClick={() => setLocation("/register")}
-              >
-                إنشاء حساب مجاني
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-2 border-slate-500 text-white hover:bg-slate-800 hover:border-slate-400 rounded-xl px-6 md:px-8 transition-all"
-                onClick={() => setLocation("/plugins")}
-              >
-                كل الإضافات
+              <p className="text-slate-600 leading-relaxed">
+                تعمل المنصة كطبقة قرار بين المحادثة وتنفيذ الطلب، بحيث تحدد
+                الإجراء الأنسب لكل حالة دون تعقيد في سير العمل.
+              </p>
+            </section>
+
+            <section id="who" className="scroll-mt-24 mb-14">
+              <h2 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <Globe className="w-5 h-5" />
+                لمن هذا الحل؟
+              </h2>
+              <ul className="space-y-3 text-slate-600">
+                <li className="rounded-lg border border-slate-200 p-4">
+                  بائعون يستقبلون الطلبات مباشرة عبر الرسائل.
+                </li>
+                <li className="rounded-lg border border-slate-200 p-4">
+                  فرق صغيرة تحتاج قرارات أسرع ووقت مراجعة أقل.
+                </li>
+                <li className="rounded-lg border border-slate-200 p-4">
+                  متاجر تريد تقليل الإرجاع والطلبات غير الجادة.
+                </li>
+              </ul>
+            </section>
+
+            <section id="workflow" className="scroll-mt-24 mb-14">
+              <h2 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <Workflow className="w-5 h-5" />
+                آلية العمل
+              </h2>
+              <div className="space-y-3 text-slate-600">
+                <Card className="border-slate-200">
+                  <CardContent className="pt-5">
+                    <p className="font-semibold text-slate-800 mb-1">1) جمع البيانات</p>
+                    <p>جمع معلومات الطلب من المحادثة: الاسم، الهاتف، العنوان، المبلغ.</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-slate-200">
+                  <CardContent className="pt-5">
+                    <p className="font-semibold text-slate-800 mb-1">2) إرسال للتقييم</p>
+                    <p>إرسال الطلب إلى النظام عبر نقطة الربط للحصول على قرار واضح.</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-slate-200">
+                  <CardContent className="pt-5">
+                    <p className="font-semibold text-slate-800 mb-1">3) تنفيذ القرار</p>
+                    <p>تحديث مسار المحادثة تلقائيًا بناءً على القرار المعاد من النظام.</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
+            <section id="decisions" className="scroll-mt-24 mb-6">
+              <h2 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <MessageSquareText className="w-5 h-5" />
+                القرارات المتاحة
+              </h2>
+            </section>
+
+            {DECISION_ITEMS.map((item) => (
+              <section key={item.id} id={item.id} className="scroll-mt-24 mb-8">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-2 py-1 rounded text-xs font-bold bg-teal-100 text-teal-800">
+                    {item.key}
+                  </span>
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 mb-2">{item.title}</h3>
+                <p className="text-slate-600 leading-relaxed mb-3">{item.description}</p>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+                  <span className="font-medium">رسالة مقترحة للعميل:</span>{" "}
+                  {item.customerMessage}
+                </div>
+              </section>
+            ))}
+
+            <section id="integration-modes" className="scroll-mt-24 mb-14">
+              <h2 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                طرق الربط
+              </h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                <Card className="border-slate-200">
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Webhook className="w-4 h-4 text-teal-600" />
+                      ربط الأنظمة الحالية
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-slate-600 space-y-2">
+                    <p>استخدام منصات المحادثة الحالية وربطها مباشرة مع النظام.</p>
+                    <p>مناسب عند وجود تدفق عمل جاهز وتحتاج فقط طبقة اتخاذ القرار.</p>
+                  </CardContent>
+                </Card>
+                <Card className="border-slate-200">
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-teal-600" />
+                      مساعد بداية بسيط
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="text-sm text-slate-600 space-y-2">
+                    <p>تدفق جاهز للانطلاق السريع عند عدم وجود نظام محادثة معقد.</p>
+                    <p>مناسب للبدايات السريعة مع إمكانية التوسعة لاحقًا.</p>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
+            <section id="api" className="scroll-mt-24 mb-14">
+              <h2 className="text-xl font-bold text-slate-900 mb-3">بيانات نقطة الربط</h2>
+              <div className="rounded-lg border border-slate-200 p-4 bg-slate-50">
+                <p className="mb-2">
+                  <span className="font-semibold">المسار:</span>{" "}
+                  <code className="bg-white px-1.5 py-0.5 rounded">POST /tte/check-order</code>
+                </p>
+                <p className="font-semibold mb-2">الحقول الأساسية:</p>
+                <ul className="space-y-1 text-slate-600 text-sm mb-3">
+                  <li>- phone</li>
+                  <li>- amount</li>
+                  <li>- name (اختياري)</li>
+                  <li>- address (اختياري)</li>
+                </ul>
+                <p className="text-sm text-slate-600">
+                  النتيجة تكون أحد القرارات الأربعة:{" "}
+                  <code className="bg-white px-1 rounded">APPROVE</code>,{" "}
+                  <code className="bg-white px-1 rounded">CONFIRM</code>,{" "}
+                  <code className="bg-white px-1 rounded">REQUIRE_DEPOSIT</code>,{" "}
+                  <code className="bg-white px-1 rounded">VERIFY_CALL</code>.
+                </p>
+              </div>
+            </section>
+
+            <section id="features" className="scroll-mt-24 mb-14">
+              <h2 className="text-xl font-bold text-slate-900 mb-3 flex items-center gap-2">
+                <Lightbulb className="w-5 h-5" />
+                ميزات متقدمة
+              </h2>
+              <ul className="space-y-3 text-slate-600">
+                <li className="flex items-start gap-2">
+                  <ShieldCheck className="w-4 h-4 text-teal-600 mt-1 shrink-0" />
+                  تأهيل ذكي للطلبات عند الحاجة إلى معلومات إضافية.
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-teal-600 mt-1 shrink-0" />
+                  رسائل واضحة ومهنية تناسب تجربة العميل.
+                </li>
+                <li className="flex items-start gap-2">
+                  <PhoneCall className="w-4 h-4 text-teal-600 mt-1 shrink-0" />
+                  تحقق هاتفي للحالات ذات المخاطر المرتفعة.
+                </li>
+              </ul>
+            </section>
+
+            <section id="rules" className="scroll-mt-24 mb-14">
+              <h2 className="text-xl font-bold text-slate-900 mb-3">ضوابط الاستخدام</h2>
+              <div className="rounded-lg border border-slate-200 overflow-hidden">
+                <table className="w-full text-sm">
+                  <tbody>
+                    <tr className="border-b border-slate-100">
+                      <td className="py-3 px-4 font-medium text-slate-800">عرض نتيجة التقييم</td>
+                      <td className="py-3 px-4 text-slate-600">لا تُعرض درجة الثقة مباشرة للعميل.</td>
+                    </tr>
+                    <tr className="border-b border-slate-100">
+                      <td className="py-3 px-4 font-medium text-slate-800">طريقة التعامل</td>
+                      <td className="py-3 px-4 text-slate-600">اعتماد خطوات تحقق تدريجية بدل الرفض المباشر.</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-medium text-slate-800">تجربة الاستخدام</td>
+                      <td className="py-3 px-4 text-slate-600">واجهة واضحة وسريعة ومناسبة للهواتف.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            <section id="cta" className="scroll-mt-24 mb-6">
+              <div className="rounded-xl bg-slate-900 text-white p-6 md:p-8">
+                <h2 className="text-2xl font-bold mb-2">ابدأ الآن</h2>
+                <p className="text-slate-300 mb-5">
+                  فعّل الصفحة خلال دقائق وابدأ تنظيم الطلبات القادمة من المحادثات.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    className="bg-teal-500 hover:bg-teal-400 text-slate-900 font-bold"
+                    onClick={() => setLocation("/register")}
+                  >
+                    إنشاء حساب مجاني
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-slate-500 text-white hover:bg-slate-800"
+                    onClick={() => setLocation("/api-docs")}
+                  >
+                    توثيق الواجهة البرمجية
+                  </Button>
+                </div>
+              </div>
+            </section>
+
+            <div className="pt-8 border-t border-slate-200">
+              <Button variant="outline" className="rounded-lg" onClick={() => setLocation("/plugins")}>
+                <ChevronLeft className="w-4 h-4 ml-2" />
+                العودة إلى الإضافات
               </Button>
             </div>
           </div>
-        </div>
-      </section>
+        </main>
+      </div>
 
       <Footer />
     </div>

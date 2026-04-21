@@ -1,5 +1,4 @@
-// Static mode - no auth needed
-// import { useAuth } from "@/_core/hooks/useAuth";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -36,7 +35,6 @@ import {
   BarChart3,
   HelpCircle,
   ChevronRight,
-  Sparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { CSSProperties, useEffect, useMemo, useRef, useState } from "react";
@@ -53,7 +51,6 @@ const dashboardMenuIconMap: Record<string, LucideIcon> = {
   credits: Gift,
   referrals: Users,
   analytics: BarChart3,
-  "innovation-lab": Sparkles,
   plugins: Plug,
   settings: Settings,
   support: HelpCircle,
@@ -102,7 +99,6 @@ function useDashboardMenuGroups(): MenuGroup[] {
           label: "الإحصائيات والتحليلات",
           items: [
             { icon: BarChart3, label: "الإحصائيات", path: "/analytics" },
-            { icon: Sparkles, label: "مختبر الابتكار", path: "/innovation-lab" },
           ],
         },
         {
@@ -165,27 +161,15 @@ export default function DashboardLayout({
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
-  // Static mode - use mock user instead of checking authentication
-  const mockUser = {
-    id: 1,
-    name: "أحمد محمد",
-    email: "ahmed@example.com",
-    openId: "static_user",
-    role: "user" as const,
-  };
-
-  // Skip auth check for static mode - don't call useAuth to avoid loading state
-  const user = mockUser; // Use static user instead of real auth
-  const loading = false; // Always false in static mode
+  const { loading } = useAuth({ redirectOnUnauthenticated: true });
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
   }, [sidebarWidth]);
 
-  // Skip loading check for static mode
-  // if (loading) {
-  //   return <DashboardLayoutSkeleton />
-  // }
+  if (loading) {
+    return <DashboardLayoutSkeleton />;
+  }
 
   return (
     <SidebarProvider
@@ -212,21 +196,13 @@ function DashboardLayoutContent({
   children,
   setSidebarWidth,
 }: DashboardLayoutContentProps) {
-  // Static mode - use mock user
-  const mockUser = {
-    id: 1,
-    name: "أحمد محمد",
-    email: "ahmed@example.com",
-    openId: "static_user",
-    role: "user" as const,
-  };
-
-  const user = mockUser;
+  const { user, logout } = useAuth({ redirectOnUnauthenticated: true });
   const [location, setLocation] = useLocation();
   const { data: appContent } = trpc.automation.getAppContent.useQuery();
   const menuGroups = useDashboardMenuGroups();
   const brandName = appContent?.dashboard?.brandName ?? "Tunisia Trust Engine";
-  const logout = () => {
+  const handleLogout = async () => {
+    await logout();
     setLocation("/login");
   };
   const { state, toggleSidebar } = useSidebar();
@@ -422,12 +398,12 @@ function DashboardLayoutContent({
                 >
                   <Avatar className="h-9 w-9 border shrink-0">
                     <AvatarFallback className="text-xs font-medium">
-                      {user?.name?.charAt(0).toUpperCase()}
+                      {user?.fullName?.charAt(0).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
                     <p className="text-sm font-medium truncate leading-none">
-                      {user?.name || "-"}
+                      {user?.fullName || "-"}
                     </p>
                     <p className="text-xs text-muted-foreground truncate mt-1.5">
                       {user?.email || "-"}
@@ -437,7 +413,7 @@ function DashboardLayoutContent({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 <DropdownMenuItem
-                  onClick={logout}
+                  onClick={handleLogout}
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />

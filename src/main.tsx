@@ -3,7 +3,6 @@ import { UNAUTHED_ERR_MSG } from "./const";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
-import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
@@ -43,7 +42,6 @@ const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
       url: new URL("/api/trpc", API_BASE_URL).toString(),
-      transformer: superjson,
       fetch(input, init) {
         return globalThis.fetch(input, {
           ...(init ?? {}),

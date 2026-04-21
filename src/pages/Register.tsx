@@ -9,6 +9,7 @@ import { Link, useLocation } from "wouter";
 import { Mail, Phone, Lock, Eye, EyeOff, Chrome, Facebook, User, CheckCircle2, XCircle, Building2, Package, ArrowRight, ArrowLeft, Check } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { trpc } from "@/lib/trpc";
+import { isValidTunisiaPhone } from "@/lib/phone";
 import { toast } from "sonner";
 import { Navigation } from "./home/components/Navigation";
 import { Footer } from "./home/components/Footer";
@@ -57,9 +58,8 @@ export default function Register() {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isValidEmail = formData.email === "" || emailRegex.test(formData.email);
 
-  // Phone validation (Tunisian format)
-  const phoneRegex = /^(\+216|00216)?[2-9]\d{8}$/;
-  const isValidPhone = formData.phone === "" || phoneRegex.test(formData.phone.replace(/\s/g, ""));
+  // Phone validation (Tunisia only: +216/00216 or local 8 digits)
+  const isValidPhone = formData.phone === "" || isValidTunisiaPhone(formData.phone);
 
   const passwordsMatch = formData.password === formData.confirmPassword || formData.confirmPassword === "";
 
@@ -211,7 +211,7 @@ export default function Register() {
                             placeholder="example@email.com"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                            className={`pr-10 h-11 text-sm border-slate-300 focus:border-slate-900 focus:ring-slate-900 ${!isValidEmail && formData.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                            className={`pr-10 pl-10 h-11 text-sm border-slate-300 focus:border-slate-900 focus:ring-slate-900 ${!isValidEmail && formData.email ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                             required
                           />
                           {formData.email && (
@@ -240,7 +240,7 @@ export default function Register() {
                           placeholder="+216 XX XXX XXX"
                           value={formData.phone}
                           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                          className={`pr-10 h-11 text-sm border-slate-300 focus:border-slate-900 focus:ring-slate-900 ${!isValidPhone && formData.phone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
+                          className={`pr-10 pl-10 h-11 text-sm border-slate-300 focus:border-slate-900 focus:ring-slate-900 ${!isValidPhone && formData.phone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}`}
                           required
                         />
                         {formData.phone && (

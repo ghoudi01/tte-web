@@ -8,6 +8,7 @@ import { AlertCircle, CheckCircle2, Coins } from "lucide-react";
 import { useLocation } from "wouter";
 import { CREDITS } from "@/credits";
 import { trpc } from "@/lib/trpc";
+import { isValidTunisiaPhone } from "@/lib/phone";
 
 const MOCK_CREDITS_BALANCE = 42;
 
@@ -28,11 +29,16 @@ export default function PhoneVerification() {
 
   const canCheck = creditsBalance >= CREDITS.CHECK_PHONE;
   const isLowBalance = creditsBalance < CREDITS.LOW_BALANCE_THRESHOLD;
+  const isValidPhone = phoneNumber.trim() === "" || isValidTunisiaPhone(phoneNumber);
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
     if (!phoneNumber.trim()) {
       toast.error("يرجى إدخال رقم الهاتف");
+      return;
+    }
+    if (!isValidTunisiaPhone(phoneNumber)) {
+      toast.error("رقم الهاتف غير صحيح. هذا الحقل يدعم الأرقام التونسية فقط.");
       return;
     }
     if (!canCheck) {
@@ -116,8 +122,12 @@ export default function PhoneVerification() {
                       placeholder="+216 XX XXX XXX"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
+                      className={!isValidPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                       required
                     />
+                    {!isValidPhone && (
+                      <p className="text-xs text-red-500">الرجاء إدخال رقم تونسي صالح (8 أرقام).</p>
+                    )}
                   </div>
 
                   <Button type="submit" disabled={isChecking || !canCheck} className="w-full">

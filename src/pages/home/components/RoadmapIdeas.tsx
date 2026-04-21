@@ -1,4 +1,3 @@
-import { useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
   Lightbulb,
@@ -18,7 +17,6 @@ const keyToIcon = {
 } as const;
 
 export function RoadmapIdeas() {
-  const [, setLocation] = useLocation();
   const { data: ideas = [], isLoading } =
     trpc.automation.getRoadmapIdeas.useQuery();
 
@@ -94,15 +92,6 @@ export function RoadmapIdeas() {
             );
           })}
         </motion.div>
-
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => setLocation("/innovation-lab")}
-            className="inline-flex items-center rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-slate-800 transition-colors"
-          >
-            اطلع على التنفيذ الكامل للأفكار
-          </button>
-        </div>
       </div>
     </section>
   );

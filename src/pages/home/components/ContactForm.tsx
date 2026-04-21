@@ -2,6 +2,8 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Mail, User, MessageSquare, Send, Phone, Building, FileText, Globe, Package } from "lucide-react";
+import { toast } from "sonner";
+import { isValidTunisiaPhone } from "@/lib/phone";
 import { fadeInUp, scaleIn } from "./animations";
 
 export function ContactForm() {
@@ -18,8 +20,14 @@ export function ContactForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidTunisiaPhone(formData.phone)) {
+      toast.error("رقم الهاتف غير صحيح. الرجاء إدخال رقم تونسي صالح.");
+      return;
+    }
     console.log("Form submitted:", formData);
   };
+
+  const isValidPhone = formData.phone === "" || isValidTunisiaPhone(formData.phone);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -106,10 +114,17 @@ export function ContactForm() {
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
+                className={`w-full px-4 py-3 rounded-xl border-2 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 transition-all ${
+                  !isValidPhone
+                    ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                    : "border-slate-200 focus:ring-teal-500 focus:border-teal-500"
+                }`}
                 placeholder="+216 XX XXX XXX"
                 dir="ltr"
               />
+              {!isValidPhone && (
+                <p className="text-xs text-red-500 mt-1">الرجاء إدخال رقم تونسي صالح (8 أرقام).</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
