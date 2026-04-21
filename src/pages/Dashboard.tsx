@@ -65,6 +65,21 @@ export default function Dashboard() {
   }
 
   if (dashboardQuery.error) {
+    const isMerchantMissing = (dashboardQuery.error as { data?: { code?: string } })?.data?.code === "NOT_FOUND";
+    if (isMerchantMissing) {
+      return (
+        <div className="p-6" dir="rtl">
+          <Card>
+            <CardContent className="pt-6 space-y-4">
+              <p>حساب التاجر غير موجود بعد. أكمل إعداد الحساب للمتابعة.</p>
+              <Button onClick={() => setLocation("/merchant-setup")}>
+                إكمال إعداد حساب التاجر
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
     return (
       <div className="p-6" dir="rtl">
         <Card>

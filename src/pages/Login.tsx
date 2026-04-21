@@ -24,13 +24,18 @@ export default function Login() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
       if (typeof window !== "undefined") {
         window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, result.token);
       }
       utils.auth.me.setData(undefined, result.user);
       void utils.auth.me.invalidate();
-      setLocation("/dashboard");
+      try {
+        const profile = await utils.merchants.getProfile.fetch();
+        setLocation(profile ? "/dashboard" : "/merchant-setup");
+      } catch {
+        setLocation("/merchant-setup");
+      }
     },
     onError: (err) => {
       toast.error(err.message ?? "فشل تسجيل الدخول");

@@ -18,6 +18,21 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
 
   if (!isUnauthorized) return;
+  const currentPath = window.location.pathname;
+  const publicPaths = new Set([
+    "/",
+    "/login",
+    "/register",
+    "/forgot-password",
+    "/terms",
+    "/privacy",
+    "/pricing",
+    "/plugins",
+    "/api-docs",
+  ]);
+  if (publicPaths.has(currentPath)) return;
+  if (currentPath.startsWith("/pricing/")) return;
+  if (currentPath.startsWith("/plugins/")) return;
 
   const target = getLoginUrl();
   try {
