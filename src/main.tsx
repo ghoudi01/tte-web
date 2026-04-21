@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { UNAUTHED_ERR_MSG } from "./const";
+import { AUTH_TOKEN_STORAGE_KEY, UNAUTHED_ERR_MSG } from "./const";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
@@ -58,8 +58,16 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: new URL("/api/trpc", API_BASE_URL).toString(),
       fetch(input, init) {
+        const headers = new Headers(init?.headers ?? {});
+        if (typeof window !== "undefined") {
+          const token = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
+          if (token && !headers.has("authorization")) {
+            headers.set("authorization", `Bearer ${token}`);
+          }
+        }
         return globalThis.fetch(input, {
           ...(init ?? {}),
+          headers,
           credentials: "include",
         });
       },

@@ -1,6 +1,7 @@
 export const COOKIE_NAME = "tte_auth";
 export const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
 export const UNAUTHED_ERR_MSG = "Unauthorized";
+export const AUTH_TOKEN_STORAGE_KEY = "tte_auth_token";
 
 // Generate login URL at runtime so redirect URI reflects the current origin.
 export const getLoginUrl = () => {

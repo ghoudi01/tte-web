@@ -10,6 +10,7 @@ import { Mail, Phone, Lock, Eye, EyeOff, Chrome, Facebook, User, CheckCircle2, X
 import { Progress } from "@/components/ui/progress";
 import { trpc } from "@/lib/trpc";
 import { isValidTunisiaPhone } from "@/lib/phone";
+import { AUTH_TOKEN_STORAGE_KEY } from "@/const";
 import { toast } from "sonner";
 import { Navigation } from "./home/components/Navigation";
 import { Footer } from "./home/components/Footer";
@@ -119,10 +120,13 @@ export default function Register() {
       });
 
       // Login immediately so merchant profile data can be persisted server-side.
-      await loginMutation.mutateAsync({
+      const loginResult = await loginMutation.mutateAsync({
         email: formData.email,
         password: formData.password,
       });
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, loginResult.token);
+      }
 
       await createMerchantMutation.mutateAsync({
         businessName: formData.companyName,

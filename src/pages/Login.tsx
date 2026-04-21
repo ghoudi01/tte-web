@@ -11,6 +11,7 @@ import {
 import { Link, useLocation } from "wouter";
 import { Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
 import { trpc } from "@/lib/trpc";
+import { AUTH_TOKEN_STORAGE_KEY } from "@/const";
 import { toast } from "sonner";
 import { Navigation } from "./home/components/Navigation";
 import { Footer } from "./home/components/Footer";
@@ -24,6 +25,9 @@ export default function Login() {
   const utils = trpc.useUtils();
   const loginMutation = trpc.auth.login.useMutation({
     onSuccess: (result) => {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, result.token);
+      }
       utils.auth.me.setData(undefined, result.user);
       void utils.auth.me.invalidate();
       setLocation("/dashboard");
