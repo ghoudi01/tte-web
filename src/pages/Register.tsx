@@ -97,17 +97,11 @@ export default function Register() {
     }
   };
 
-  const registerMutation = trpc.auth.register.useMutation({
-    onSuccess: () => {
-      toast.success("تم إنشاء حسابك. سجّل الدخول الآن.");
-      setLocation("/login");
-    },
-    onError: (err) => {
-      toast.error(err.message ?? "فشل إنشاء الحساب");
-    },
-  });
+  const registerMutation = trpc.auth.register.useMutation();
+  const loginMutation = trpc.auth.login.useMutation();
+  const createMerchantMutation = trpc.merchants.create.useMutation();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!acceptedTerms) {
       toast.error(register?.termsAlert ?? "يجب الموافقة على الشروط والأحكام");
@@ -117,11 +111,32 @@ export default function Register() {
       toast.error("كلمة المرور يجب أن تكون 6 أحرف على الأقل");
       return;
     }
-    registerMutation.mutate({
-      email: formData.email,
-      password: formData.password,
-      name: formData.name || undefined,
-    });
+    try {
+      await registerMutation.mutateAsync({
+        email: formData.email,
+        password: formData.password,
+        name: formData.name || undefined,
+      });
+
+      // Login immediately so merchant profile data can be persisted server-side.
+      await loginMutation.mutateAsync({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      await createMerchantMutation.mutateAsync({
+        businessName: formData.companyName,
+        email: formData.companyEmail || formData.email,
+        phone: formData.companyPhone || formData.phone,
+        address: formData.companyAddress || undefined,
+      });
+
+      toast.success("تم إنشاء حسابك وملف شركتك بنجاح.");
+      setLocation("/dashboard");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "فشل إنشاء الحساب";
+      toast.error(message);
+    }
   };
 
   const isStep1Valid = formData.name && isValidEmail && isValidPhone && passwordsMatch && formData.password;
@@ -490,10 +505,20 @@ export default function Register() {
                   ) : (
                     <Button
                       type="submit"
-                      disabled={!acceptedTerms || !isStep3Valid || registerMutation.isPending}
+                      disabled={
+                        !acceptedTerms ||
+                        !isStep3Valid ||
+                        registerMutation.isPending ||
+                        loginMutation.isPending ||
+                        createMerchantMutation.isPending
+                      }
                       className="flex-1 h-12 text-sm font-semibold bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg transition-all"
                     >
-                      {registerMutation.isPending ? "جاري إنشاء الحساب…" : (register?.buttons?.submit ?? "إنشاء حساب")}
+                      {registerMutation.isPending ||
+                      loginMutation.isPending ||
+                      createMerchantMutation.isPending
+                        ? "جاري إنشاء الحساب…"
+                        : (register?.buttons?.submit ?? "إنشاء حساب")}
                     </Button>
                   )}
                 </div>
