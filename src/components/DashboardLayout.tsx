@@ -78,12 +78,6 @@ function useDashboardMenuGroups(): MenuGroup[] {
           label: "الرئيسية",
           items: [
             { icon: LayoutDashboard, label: "لوحة التحكم", path: "/dashboard" },
-          ],
-        },
-        {
-          label: "الطلبات والتحقق",
-          items: [
-            { icon: Package, label: "الطلبات", path: "/orders" },
             { icon: Phone, label: "التحقق من الهاتف", path: "/phone-verification" },
           ],
         },
@@ -108,10 +102,6 @@ function useDashboardMenuGroups(): MenuGroup[] {
               icon: Plug,
               label: "الإضافات",
               path: "/plugins",
-              subItems: [
-                { label: "كل الإضافات", path: "/plugins" },
-                { label: "حلول فيسبوك وإنستغرام", path: "/plugins/social-sellers" },
-              ],
             },
             { icon: Settings, label: "الإعدادات", path: "/settings" },
           ],
@@ -123,27 +113,26 @@ function useDashboardMenuGroups(): MenuGroup[] {
               icon: HelpCircle,
               label: "الدعم",
               path: "/support",
-              subItems: [
-                { label: "اتصل بنا", path: "/support/contact" },
-                { label: "الإبلاغ عن مشكلة", path: "/support/report" },
-              ],
             },
           ],
         },
       ];
     }
-    return apiGroups.map(group => ({
-      label: group.label,
-      items: group.items.map(item => {
-        const i = item as { id: string; label: string; path: string; subItems?: { label: string; path: string }[] };
-        return {
-          icon: dashboardMenuIconMap[i.id] ?? LayoutDashboard,
-          label: i.label,
-          path: i.path,
-          subItems: i.subItems,
-        };
-      }),
-    }));
+    return apiGroups
+      .map(group => ({
+        label: group.label,
+        items: group.items.map(item => {
+          const i = item as { id: string; label: string; path: string };
+          // Remove subItems from plugins and support if they exist in API data
+          const menuItem: MenuItem = {
+            icon: dashboardMenuIconMap[i.id] ?? LayoutDashboard,
+            label: i.label,
+            path: i.path,
+          };
+          return menuItem;
+        }),
+      }))
+      .filter(group => group.items.length > 0);
   }, [apiGroups]);
 }
 

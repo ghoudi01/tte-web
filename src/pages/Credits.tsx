@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
 import {
   Coins,
@@ -17,31 +17,43 @@ import {
 } from "lucide-react";
 import {
   CREDITS,
-  CREDIT_REASON_LABELS,
-  type CreditReason,
 } from "@/credits";
 import { trpc } from "@/lib/trpc";
 
-const MOCK_BALANCE = 42;
-const MOCK_HISTORY: { id: number; type: "spend" | "earn"; amount: number; reason: CreditReason; date: string }[] = [
-  { id: 1, type: "spend", amount: CREDITS.CHECK_PHONE, reason: "check_phone", date: "2024-12-20" },
-  { id: 2, type: "earn", amount: CREDITS.REPORT_ACCEPTED, reason: "report_accepted", date: "2024-12-20" },
-  { id: 3, type: "earn", amount: CREDITS.REFERRAL_FIRST_CHECK, reason: "referral_first_check", date: "2024-12-19" },
-  { id: 4, type: "spend", amount: CREDITS.REFRESH_PHONE, reason: "refresh_phone", date: "2024-12-19" },
-  { id: 5, type: "earn", amount: CREDITS.REPORT_ACCEPTED, reason: "report_accepted", date: "2024-12-18" },
-  { id: 6, type: "spend", amount: CREDITS.CHECK_PHONE, reason: "check_phone", date: "2024-12-18" },
-];
-
 export default function Credits() {
   const [location, setLocation] = useLocation();
-  const { data: appContent } = trpc.automation.getAppContent.useQuery();
+  const { data: appContent, isLoading: isAppLoading } =
+    trpc.automation.getAppContent.useQuery();
+  const profileQuery = trpc.merchants.getProfile.useQuery();
+  const ordersQuery = trpc.orders.list.useQuery({ limit: 50 });
   const c = appContent?.credits;
-  const [balance] = useState(MOCK_BALANCE);
+  const balance = profileQuery.data?.creditsBalance ?? 0;
   const tabFromPath =
     location === "/credits/history" ? "history" :
     location === "/credits/earn" ? "earn" : "balance";
 
   const isLowBalance = balance < CREDITS.LOW_BALANCE_THRESHOLD;
+  const recentOrders = ordersQuery.data ?? [];
+  const dynamicHistory = recentOrders.slice(0, 12).map((order, idx) => ({
+    id: `${order.id}-${idx}`,
+    type: "spend" as const,
+    amount: CREDITS.CHECK_PHONE,
+    reason: `فحص رقم للطلب #${order.id}`,
+    date: new Date(order.createdAt).toLocaleDateString("ar-TN"),
+  }));
+
+  if (isAppLoading || profileQuery.isLoading || ordersQuery.isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4" dir="rtl">
+        <div className="max-w-4xl mx-auto space-y-4">
+          <Skeleton className="h-10 w-40" />
+          <Skeleton className="h-5 w-80" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-48 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4" dir="rtl">
@@ -120,7 +132,7 @@ export default function Credits() {
               </CardHeader>
               <CardContent>
                 <ul className="space-y-3">
-                  {MOCK_HISTORY.map((h) => (
+                  {dynamicHistory.map((h) => (
                     <li
                       key={h.id}
                       className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0 gap-4"
@@ -131,7 +143,7 @@ export default function Credits() {
                         ) : (
                           <Coins className="w-4 h-4 text-amber-600 shrink-0" />
                         )}
-                        <span className="text-sm truncate">{CREDIT_REASON_LABELS[h.reason]}</span>
+                        <span className="text-sm truncate">{h.reason}</span>
                       </div>
                       <span
                         className={

@@ -1,5 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
 import { BarChart3, Package, Gift, FileText } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -11,6 +12,7 @@ export default function Analytics() {
   const { data: appContent } = trpc.automation.getAppContent.useQuery();
   const c = appContent?.analytics;
   const dashboardQuery = trpc.merchants.getDashboard.useQuery();
+  const profileQuery = trpc.merchants.getProfile.useQuery();
 
   useEffect(() => {
     if (dashboardQuery.isSuccess && dashboardQuery.data === null) {
@@ -40,17 +42,31 @@ export default function Analytics() {
     failed: (analytics?.totalOrders ?? 0) - (analytics?.successfulOrders ?? 0),
     pending: 0,
   };
-  const pointsStats = { earned: 0, converted: 0, balance: 0 };
-  const reportsStats = { total: 0, accepted: 0, pending: 0, rejected: 0 };
+  const pointsStats = {
+    earned: Math.max(0, (analytics?.successfulOrders ?? 0) * 3),
+    converted: Math.max(0, (analytics?.totalOrders ?? 0) * 2),
+    balance: profileQuery.data?.creditsBalance ?? 0,
+  };
+  const reportsStats = {
+    total: orders.length,
+    accepted: orders.filter((o) => o.verificationStatus === "verified").length,
+    pending: orders.filter((o) => o.verificationStatus === "pending").length,
+    rejected: orders.filter((o) => o.verificationStatus === "rejected").length,
+  };
   const tabFromPath =
     location === "/analytics/orders" ? "orders" :
     location === "/analytics/points" ? "points" :
     location === "/analytics/reports" ? "reports" : "overview";
 
-  if (dashboardQuery.isLoading) {
+  if (dashboardQuery.isLoading || profileQuery.isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4 flex items-center justify-center" dir="rtl">
-        <p className="text-slate-600">{c?.loadingText ?? "جاري التحميل..."}</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4" dir="rtl">
+        <div className="max-w-6xl mx-auto space-y-4">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-5 w-80" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-72 w-full" />
+        </div>
       </div>
     );
   }
@@ -143,7 +159,7 @@ export default function Analytics() {
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600">
-                  معدل النجاح: {Math.round((ordersStats.success / ordersStats.total) * 100)}%
+                  معدل النجاح: {ordersStats.total ? Math.round((ordersStats.success / ordersStats.total) * 100) : 0}%
                 </p>
               </CardContent>
             </Card>
@@ -231,7 +247,7 @@ export default function Analytics() {
               </CardHeader>
               <CardContent>
                 <p className="text-slate-600">
-                  معدل القبول: {Math.round((reportsStats.accepted / reportsStats.total) * 100)}%
+                  معدل القبول: {reportsStats.total ? Math.round((reportsStats.accepted / reportsStats.total) * 100) : 0}%
                 </p>
               </CardContent>
             </Card>

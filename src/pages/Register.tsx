@@ -458,7 +458,7 @@ export default function Register() {
                       )}
                     </div>
 
-                    <div className="flex items-start space-x-1.5 space-x-reverse text-xs pt-2">
+                    <div className="flex items-start space-x-2 space-x-reverse text-xs pt-2">
                       <Checkbox
                         id="terms"
                         checked={acceptedTerms}

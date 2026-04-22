@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
   Phone,
@@ -58,8 +59,15 @@ export default function Dashboard() {
 
   if (dashboardQuery.isLoading || dashboardQuery.isFetching) {
     return (
-      <div className="p-6" dir="rtl">
-        {dashboard?.loadingText ?? "جاري تحميل لوحة التحكم..."}
+      <div className="p-6 space-y-4" dir="rtl">
+        <Skeleton className="h-9 w-48" />
+        <Skeleton className="h-5 w-64" />
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+          <Skeleton className="h-28 w-full" />
+        </div>
       </div>
     );
   }
@@ -96,7 +104,7 @@ export default function Dashboard() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black text-slate-900">
-            {dashboard?.pageTitle ?? "لوحة تحكم مبسطة"}
+            {dashboard?.pageTitle ?? "لوحة التحكم"}
           </h1>
           <p className="text-slate-600">
             {dashboard?.pageSubtitle ?? "كل ما تحتاجه اليوم في مكان واحد."}
@@ -176,60 +184,7 @@ export default function Dashboard() {
           })}
         </CardContent>
       </Card>
-
-      <div className="grid lg:grid-cols-2 gap-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" /> {cards?.recentOrders ?? "آخر الطلبات"}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            {orders.slice(0, 6).map(o => (
-              <div
-                key={o.id}
-                className="flex items-center justify-between border rounded-lg p-2"
-              >
-                <span className="font-mono">{o.phoneNumber || "-"}</span>
-                <span>{fmtCurrency(o.orderAmount || 0)}</span>
-              </div>
-            ))}
-            {orders.length === 0 && (
-              <p className="text-slate-500">{cards?.noOrders ?? "لا توجد طلبات بعد."}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>{cards?.riskSummary ?? "ملخص المخاطر"}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm">
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <span className="flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />{" "}
-                {cards?.lowRiskOrders ?? "طلبات منخفضة المخاطر"}
-              </span>
-              <b>
-                {Math.max(
-                  0,
-                  Math.round(stats.totalOrders * (stats.successRate / 100))
-                )}
-              </b>
-            </div>
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <span className="flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-600" />{" "}
-                {cards?.needsReview ?? "طلبات تحتاج مراجعة"}
-              </span>
-              <b>{Math.max(0, Math.round(stats.totalOrders * 0.2))}</b>
-            </div>
-            <p className="text-slate-500">
-              {cards?.tip ?? "نصيحة: فعّل قواعد \"السياسة التلقائية\" من صفحات MVP لتقليل الـ RTO."}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
     </div>
+
   );
 }

@@ -12,7 +12,6 @@ import PhoneVerification from "./pages/PhoneVerification";
 import Plugins from "./pages/Plugins";
 import PluginsSocialSellers from "./pages/PluginsSocialSellers";
 import ApiDocs from "./pages/ApiDocs";
-import Orders from "./pages/Orders";
 import Settings from "./pages/Settings";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -20,7 +19,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import Pricing from "./pages/Pricing";
-import Reports from "./pages/Reports";
+import Reports from "./pages/ReportsDynamic";
 import Credits from "./pages/Credits";
 import Referrals from "./pages/Referrals";
 import Analytics from "./pages/Analytics";
@@ -51,9 +50,7 @@ function Router() {
         </DashboardLayout>
       </Route>
       <Route path={"/orders"}>
-        <DashboardLayout>
-          <Orders />
-        </DashboardLayout>
+        {() => <Redirect to="/reports" />}
       </Route>
       <Route path={"/phone-verification"}>
         <DashboardLayout>
@@ -163,9 +160,7 @@ function Router() {
         </DashboardLayout>
       </Route>
       <Route path={"/support/report"}>
-        <DashboardLayout>
-          <Support />
-        </DashboardLayout>
+        {() => <Redirect to="/support" />}
       </Route>
       <Route path={"/support"}>
         <DashboardLayout>

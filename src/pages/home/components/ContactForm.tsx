@@ -4,9 +4,12 @@ import { useState } from "react";
 import { Mail, User, MessageSquare, Send, Phone, Building, FileText, Globe, Package } from "lucide-react";
 import { toast } from "sonner";
 import { isValidTunisiaPhone } from "@/lib/phone";
+import { trpc } from "@/lib/trpc";
 import { fadeInUp, scaleIn } from "./animations";
 
 export function ContactForm() {
+  const { data: homeContent } = trpc.automation.getHomeContent.useQuery();
+  const support = homeContent?.support;
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -54,10 +57,10 @@ export function ContactForm() {
           dir="rtl"
         >
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-3">
-            التواصل معنا
+            {support?.title ?? "التواصل معنا"}
           </h2>
           <p className="text-lg md:text-xl text-slate-600">
-            تواصل معنا لأي استفسارات أو أسئلة
+            {support?.subtitle ?? "تواصل معنا لأي استفسارات أو أسئلة"}
           </p>
         </motion.div>
         

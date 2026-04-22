@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { AlertCircle, CheckCircle2, Coins } from "lucide-react";
 import { useLocation } from "wouter";
@@ -10,25 +11,24 @@ import { CREDITS } from "@/credits";
 import { trpc } from "@/lib/trpc";
 import { isValidTunisiaPhone } from "@/lib/phone";
 
-const MOCK_CREDITS_BALANCE = 42;
-
 export default function PhoneVerification() {
   const [, setLocation] = useLocation();
-  const { data: appContent } = trpc.automation.getAppContent.useQuery();
+  const { data: appContent, isLoading: isAppContentLoading } =
+    trpc.automation.getAppContent.useQuery();
+  const profileQuery = trpc.merchants.getProfile.useQuery();
+  const utils = trpc.useUtils();
   const c = appContent?.phoneVerification;
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneToCheck, setPhoneToCheck] = useState<string | null>(null);
-  const [reportOrderId, setReportOrderId] = useState("");
-  const [reportReason, setReportReason] = useState("");
 
   const checkQuery = trpc.phoneVerification.check.useQuery(
     { phoneNumber: phoneToCheck! },
-    { enabled: !!phoneToCheck }
+    { enabled: !!phoneToCheck, refetchOnWindowFocus: false }
   );
   const reportVerdictMutation = trpc.phoneVerification.reportVerdict.useMutation();
   const result = checkQuery.data ?? null;
   const isChecking = checkQuery.isFetching;
-  const creditsBalance = MOCK_CREDITS_BALANCE;
+  const creditsBalance = result?.creditsBalance ?? profileQuery.data?.creditsBalance ?? 0;
 
   const canCheck = creditsBalance >= CREDITS.CHECK_PHONE;
   const isLowBalance = creditsBalance < CREDITS.LOW_BALANCE_THRESHOLD;
@@ -60,15 +60,13 @@ export default function PhoneVerification() {
       await reportVerdictMutation.mutateAsync({
         phoneNumber: result.phoneNumber,
         verdict,
-        orderId: reportOrderId.trim() ? Number(reportOrderId.trim()) : undefined,
-        reason: reportReason.trim() || undefined,
       });
       toast.success(
         verdict === "spam"
           ? "تم تسجيل هذا الرقم كـ SPAM"
           : "تم تسجيل هذا الرقم كـ NOT SPAM"
       );
-      await checkQuery.refetch();
+      await utils.merchants.getProfile.invalidate();
     } catch (error) {
       toast.error("فشل حفظ تقييم الرقم");
     }
@@ -108,6 +106,21 @@ export default function PhoneVerification() {
         return "bg-slate-50 border-slate-200";
     }
   };
+
+  if (isAppContentLoading || profileQuery.isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4" dir="rtl">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Skeleton className="h-9 w-48" />
+          <Skeleton className="h-5 w-72" />
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <Skeleton className="h-[420px] lg:col-span-2" />
+            <Skeleton className="h-[420px]" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4" dir="rtl">
@@ -264,20 +277,14 @@ export default function PhoneVerification() {
                   </div>
 
                   <div className="pt-4 border-t border-slate-200 space-y-3">
-                    <p className="text-sm font-semibold text-slate-900">
-                      ساعد النظام: سجل قرارك على هذا الرقم
-                    </p>
-                    <Input
-                      type="number"
-                      value={reportOrderId}
-                      onChange={(e) => setReportOrderId(e.target.value)}
-                      placeholder="رقم الطلب (اختياري)"
-                    />
-                    <Input
-                      value={reportReason}
-                      onChange={(e) => setReportReason(e.target.value)}
-                      placeholder="ملاحظة/سبب (اختياري)"
-                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="w-full"
+                      onClick={() => setLocation("/reports/new")}
+                    >
+                      إضافة تقرير
+                    </Button>
                     <div className="grid grid-cols-2 gap-2">
                       <Button
                         type="button"

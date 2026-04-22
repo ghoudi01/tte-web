@@ -4,30 +4,54 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
 import { Link as LinkIcon, Users, BarChart3, Copy, Share2, QrCode } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
-const referralLink = "https://tte.tn/ref/ABC123XYZ";
-const staticReferredUsers = [
-  { id: 1, name: "محمد علي", email: "mohamed@example.com", joinDate: "2024-12-15", creditsEarned: 3 },
-  { id: 2, name: "سارة أحمد", email: "sara@example.com", joinDate: "2024-12-10", creditsEarned: 3 },
-  { id: 3, name: "خالد محمود", email: "khalid@example.com", joinDate: "2024-12-05", creditsEarned: 3 },
-];
-const staticStats = {
-  totalReferrals: 8,
-  activeUsers: 6,
-  totalCreditsEarned: 24,
-};
-
 export default function Referrals() {
   const [location, setLocation] = useLocation();
-  const { data: appContent } = trpc.automation.getAppContent.useQuery();
+  const { data: appContent, isLoading: isAppLoading } =
+    trpc.automation.getAppContent.useQuery();
+  const profileQuery = trpc.merchants.getProfile.useQuery();
+  const ordersQuery = trpc.orders.list.useQuery({ limit: 50 });
   const c = appContent?.referrals;
   const tabFromPath =
     location === "/referrals/users" ? "users" :
     location === "/referrals/stats" ? "stats" : "link";
+
+  const referredUsers = (ordersQuery.data ?? [])
+    .filter((o) => !!o.clientName)
+    .slice(0, 12)
+    .map((o) => ({
+      id: o.id,
+      name: o.clientName || "مستخدم",
+      email: "-",
+      joinDate: new Date(o.createdAt).toLocaleDateString("ar-TN"),
+      creditsEarned: o.verificationStatus === "verified" ? 3 : 0,
+    }));
+  const referralLink = profileQuery.data?.apiKey
+    ? `${window.location.origin}/register?ref=${profileQuery.data.apiKey}`
+    : `${window.location.origin}/register`;
+  const stats = {
+    totalReferrals: referredUsers.length,
+    activeUsers: referredUsers.filter((u) => u.creditsEarned > 0).length,
+    totalCreditsEarned: referredUsers.reduce((sum, u) => sum + u.creditsEarned, 0),
+  };
+
+  if (isAppLoading || profileQuery.isLoading || ordersQuery.isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4" dir="rtl">
+        <div className="max-w-4xl mx-auto space-y-4">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-5 w-72" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   const copyLink = () => {
     navigator.clipboard.writeText(referralLink);
@@ -83,7 +107,7 @@ export default function Referrals() {
                   <Users className="w-5 h-5" />
                   المستخدمون المحالون
                 </CardTitle>
-                <CardDescription>{staticReferredUsers.length} مستخدم</CardDescription>
+                <CardDescription>{referredUsers.length} مستخدم</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
@@ -97,7 +121,7 @@ export default function Referrals() {
                       </tr>
                     </thead>
                     <tbody>
-                      {staticReferredUsers.map((u) => (
+                      {referredUsers.map((u) => (
                         <tr key={u.id} className="border-b border-slate-100 hover:bg-slate-50">
                           <td className="py-3 px-4 font-medium">{u.name}</td>
                           <td className="py-3 px-4">{u.email}</td>
@@ -118,7 +142,7 @@ export default function Referrals() {
                   <CardTitle className="text-sm font-medium text-slate-600">إجمالي الإحالات</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-slate-900">{staticStats.totalReferrals}</div>
+                  <div className="text-3xl font-bold text-slate-900">{stats.totalReferrals}</div>
                 </CardContent>
               </Card>
               <Card>
@@ -126,7 +150,7 @@ export default function Referrals() {
                   <CardTitle className="text-sm font-medium text-slate-600">مستخدمون نشطون</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-green-600">{staticStats.activeUsers}</div>
+                  <div className="text-3xl font-bold text-green-600">{stats.activeUsers}</div>
                 </CardContent>
               </Card>
               <Card>
@@ -134,7 +158,7 @@ export default function Referrals() {
                   <CardTitle className="text-sm font-medium text-slate-600">اعتمادات مكتسبة من الإحالات</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold text-purple-600">{staticStats.totalCreditsEarned}</div>
+                  <div className="text-3xl font-bold text-purple-600">{stats.totalCreditsEarned}</div>
                 </CardContent>
               </Card>
             </div>
