@@ -1,45 +1,51 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
+import { Suspense, lazy } from "react";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { Redirect } from "./components/Redirect";
-import Home from "./pages/home";
-import MerchantSetup from "./pages/MerchantSetup";
-import Dashboard from "./pages/Dashboard";
-import PhoneVerification from "./pages/PhoneVerification";
-import Plugins from "./pages/Plugins";
-import PluginsSocialSellers from "./pages/PluginsSocialSellers";
-import ApiDocs from "./pages/ApiDocs";
-import Settings from "./pages/Settings";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import ForgotPassword from "./pages/ForgotPassword";
-import Terms from "./pages/Terms";
-import Privacy from "./pages/Privacy";
-import Pricing from "./pages/Pricing";
-import Reports from "./pages/ReportsDynamic";
-import Credits from "./pages/Credits";
-import Referrals from "./pages/Referrals";
-import Analytics from "./pages/Analytics";
-import Subscription from "./pages/Subscription";
-import Support from "./pages/Support";
-import PhoneVerificationHistory from "./pages/PhoneVerificationHistory";
+import { DashboardLayoutSkeleton } from "./components/DashboardLayoutSkeleton";
 import DashboardLayout from "./components/DashboardLayout";
+
+const NotFound = lazy(() => import("@/pages/NotFound"));
+const Home = lazy(() => import("@/pages/home"));
+const MerchantSetup = lazy(() => import("@/pages/MerchantSetup"));
+const Dashboard = lazy(() => import("@/pages/Dashboard"));
+const PhoneVerification = lazy(() => import("@/pages/PhoneVerification"));
+const Plugins = lazy(() => import("@/pages/Plugins"));
+const PluginsSocialSellers = lazy(() => import("@/pages/PluginsSocialSellers"));
+const ApiDocs = lazy(() => import("@/pages/ApiDocs"));
+const Settings = lazy(() => import("@/pages/Settings"));
+const Login = lazy(() => import("@/pages/Login"));
+const Register = lazy(() => import("@/pages/Register"));
+const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
+const Terms = lazy(() => import("@/pages/Terms"));
+const Privacy = lazy(() => import("@/pages/Privacy"));
+const Pricing = lazy(() => import("@/pages/Pricing"));
+const Reports = lazy(() => import("@/pages/ReportsDynamic"));
+const Credits = lazy(() => import("@/pages/Credits"));
+const Referrals = lazy(() => import("@/pages/Referrals"));
+const Analytics = lazy(() => import("@/pages/Analytics"));
+const Subscription = lazy(() => import("@/pages/Subscription"));
+const Support = lazy(() => import("@/pages/Support"));
+const PhoneVerificationHistory = lazy(
+  () => import("@/pages/PhoneVerificationHistory")
+);
 
 function Router() {
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/merchant-setup"} component={MerchantSetup} />
-      <Route path={"/login"} component={Login} />
-      <Route path={"/register"} component={Register} />
-      <Route path={"/forgot-password"} component={ForgotPassword} />
-      <Route path={"/terms"} component={Terms} />
-      <Route path={"/privacy"} component={Privacy} />
-      <Route path={"/pricing"} component={Pricing} />
-      <Route path={"/pricing/:plan"} component={Pricing} />
+    <Suspense fallback={<DashboardLayoutSkeleton />}>
+      <Switch>
+        <Route path={"/"} component={Home} />
+        <Route path={"/merchant-setup"} component={MerchantSetup} />
+        <Route path={"/login"} component={Login} />
+        <Route path={"/register"} component={Register} />
+        <Route path={"/forgot-password"} component={ForgotPassword} />
+        <Route path={"/terms"} component={Terms} />
+        <Route path={"/privacy"} component={Privacy} />
+        <Route path={"/pricing"} component={Pricing} />
+        <Route path={"/pricing/:plan"} component={Pricing} />
 
       <Route path={"/user-dashboard"}>
         {() => <Redirect to="/dashboard" />}
@@ -168,9 +174,10 @@ function Router() {
         </DashboardLayout>
       </Route>
 
-      <Route path={"/404"} component={NotFound} />
-      <Route component={NotFound} />
-    </Switch>
+        <Route path={"/404"} component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
 }
 

@@ -149,7 +149,7 @@
 
 ### 🗄️ Backend (server/)
 - [x] tRPC API setup
-- [x] Drizzle ORM configuration
+- [x] Prisma ORM configuration
 - [x] Database schema (users, merchants, orders, verifications, etc.)
 - [x] Authentication procedures
 - [x] Merchant profile management
@@ -164,8 +164,8 @@
 ### 🔴 HIGH PRIORITY (Backend Integration)
 
 #### Authentication Backend
-- [ ] **Connect login/register to real backend** (currently uses mock tRPC calls)
-- [ ] **JWT token management** (store, refresh, logout)
+- [x] **Connect login/register to real backend**
+- [x] **JWT token management** (store, login, logout)
 - [ ] **OAuth integration** (Google, Facebook - mentioned but not implemented)
 - [ ] **Email verification flow** (send verification emails)
 - [ ] **Password reset email sending**
@@ -175,13 +175,13 @@
 #### Phone Verification Backend
 - [ ] **Real OTP sending** (SMS gateway integration)
 - [ ] **OTP code generation and validation**
-- [ ] **Rate limiting** (prevent abuse)
-- [ ] **Phone number blacklist/spam list**
+- [x] **Rate limiting** (prevent abuse on REST/plugin surfaces)
+- [x] **Phone number blacklist/spam list**
 - [ ] **Verification attempt tracking**
 - [ ] **Credits deduction on actual verification**
 
 #### Orders Backend
-- [ ] **Connect order creation to database** (currently mock data)
+- [x] **Connect plugin order creation to database**
 - [ ] **Real fraud score calculation** (integrate ia-system)
 - [ ] **Order sync from plugins** (webhooks implementation)
 - [ ] **Bulk order import/export** (CSV)
@@ -189,8 +189,8 @@
 - [ ] **Order notes/comments thread**
 
 #### Points/Credits Backend
-- [ ] **Real credits balance tracking** in database
-- [ ] **Credits deduction on phone checks**
+- [x] **Real credits balance tracking** in database
+- [x] **Credits deduction on phone checks**
 - [ ] **Credits award automation** (after order delivery/feedback)
 - [ ] **Payment gateway integration** for credit purchases
 - [ ] **Withdrawal processing** (bank transfer, mobile money)
@@ -205,8 +205,8 @@
 - [ ] **Referral link customization** (custom slugs)
 
 #### API Key Management
-- [ ] **API key generation** for merchants
-- [ ] **API key rotation/reset**
+- [x] **API key generation** for merchants
+- [x] **API key rotation/reset**
 - [ ] **API usage tracking and limits**
 - [ ] **Webhook configuration UI**
 - [ ] **API key permissions/scopes**
@@ -324,9 +324,9 @@
 ## 🎯 Next Steps (Priority Order)
 
 ### Phase 1: Backend Integration (2-3 weeks)
-1. Set up production database (PostgreSQL)
-2. Implement real authentication (JWT, sessions)
-3. Connect all forms to actual API endpoints
+1. Choose and provision the production database target
+2. Complete email/OAuth flows around the existing JWT auth
+3. Connect remaining forms to actual API endpoints
 4. Implement credits tracking and deduction
 5. Set up SMS gateway for OTP
 
@@ -356,8 +356,8 @@
 ## 📝 Technical Notes
 
 - **Frontend**: React + TypeScript + Vite + wouter + shadcn/ui
-- **Backend**: Strapi (legacy) + tRPC + Drizzle ORM (new)
-- **Database**: SQLite (dev) → PostgreSQL (production)
+- **Backend**: NestJS + tRPC + plugin REST API
+- **Database**: Prisma + SQLite for local development
 - **AI/ML**: TypeScript-based rules engine + pipelines
 - **Plugins**: TypeScript modules with JSON manifests
 - **Styling**: Tailwind CSS with custom theme

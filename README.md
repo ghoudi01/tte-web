@@ -41,8 +41,8 @@ A comprehensive React.js web application for the Tunisia Trust Engine platform, 
 ## 🛠️ Technology Stack
 
 - **Frontend**: React.js 19, TypeScript, Tailwind CSS
-- **Backend**: Node.js, Express, tRPC
-- **Database**: MySQL with Drizzle ORM
+- **Backend**: NestJS, tRPC, plugin REST API
+- **Database**: Prisma with SQLite for local development
 - **UI Components**: Radix UI, shadcn/ui
 - **Charts**: Recharts
 - **Routing**: Wouter
@@ -60,47 +60,33 @@ pnpm install
 cp .env.example .env
 ```
 
-Required environment variables:
-- `DATABASE_URL`: MySQL connection string
-- `VITE_APP_ID`: Application ID for OAuth
-- `VITE_OAUTH_PORTAL_URL`: OAuth portal URL
-- `JWT_SECRET`: Secret for JWT tokens
-- `OAUTH_SERVER_URL`: OAuth server URL
-- `OWNER_OPEN_ID`: Owner's OpenID for admin access
+Required environment variables are managed by the backend in `server/.env`.
+The frontend expects the API to be available through the Vite dev proxy or
+the configured deployment origin.
 
-3. Run database migrations:
-```bash
-pnpm db:push
-```
-
-4. Seed initial plugins data:
-```bash
-pnpm seed:plugins
-```
-
-5. Start development server:
+3. Start the backend from `server/`:
 ```bash
 pnpm dev
 ```
 
-The application will be available at `http://localhost:3000`
+4. Start development server:
+```bash
+pnpm dev
+```
+
+The application will be available at `http://localhost:5173`
 
 ## 📁 Project Structure
 
 ```
 web/
-├── client/              # React frontend
-│   ├── src/
-│   │   ├── components/  # React components
-│   │   ├── pages/       # Page components
-│   │   ├── lib/         # Utilities and tRPC client
-│   │   └── contexts/    # React contexts
-├── server/              # Express backend
-│   ├── _core/           # Core server utilities
-│   ├── routers.ts       # tRPC routers
-│   └── db.ts            # Database functions
-├── drizzle/             # Database schema and migrations
-└── shared/              # Shared types and constants
+├── src/
+│   ├── components/      # React components
+│   ├── pages/           # Page components
+│   ├── lib/             # Utilities and tRPC client
+│   └── contexts/        # React contexts
+├── patches/             # pnpm patches
+└── vite.config.ts       # Vite and dev proxy configuration
 ```
 
 ## 🔌 API Endpoints (tRPC)
@@ -116,18 +102,22 @@ All API endpoints are available through tRPC:
 
 ### Phone Verification
 - `phoneVerification.check` - Check phone number and get trust score
-- `phoneVerification.sendOtp` - Send OTP for verification
-- `phoneVerification.verifyOtp` - Verify OTP
+- `phoneVerification.reportVerdict` - Submit spam/not-spam feedback
 
 ### Orders
 - `orders.list` - List orders with filters
-- `orders.create` - Create new order
 - `orders.updateStatus` - Update order status
+- `orders.addFeedback` - Add order feedback
+- `orders.feedbackByOrder` - List feedback for an order
 
-### Plugins
-- `plugins.list` - Get all available plugins
-- `plugins.getInstalled` - Get merchant's installed plugins
-- `plugins.install` - Install a plugin
+### Reports
+- `reports.create` - Submit a merchant report
+- `reports.list` - List merchant reports
+- `reports.get` - Get one report
+- `reports.update` - Update a report
+
+Plugin integrations use backend REST endpoints such as
+`POST /api/plugin/orders` with an `X-API-Key` header.
 
 ## 🎨 Pages
 
@@ -138,27 +128,28 @@ All API endpoints are available through tRPC:
 - **Phone Verification** (`/phone-verification`) - Verify phone numbers
 - **Plugins** (`/plugins`) - Plugin marketplace
 - **Settings** (`/settings`) - Account settings and API keys
-- **Documentation** (`/documentation`) - API documentation and guides
+- **API Docs** (`/api-docs`) - API documentation and guides
 
 ## 🔐 Authentication
 
-The application uses OAuth for authentication. Users must sign in to access protected routes. The `DashboardLayout` component automatically handles authentication checks and redirects unauthenticated users to the login page.
+The application uses the backend auth tRPC router and stores a JWT for API
+calls. Protected dashboard routes are wrapped by `DashboardLayout`.
 
 ## 📊 Database Schema
 
 ### Tables
 - `users` - User accounts
 - `merchants` - Merchant profiles
-- `phoneVerifications` - Phone verification records
+- `spamPhones` - Spam/not-spam reports for phone numbers
 - `orders` - Order records
-- `plugins` - Available plugins
-- `merchantPlugins` - Installed plugins per merchant
+- `orderFeedbacks` - Feedback linked to orders
+- `reports` - Merchant-submitted reports
 
 ## 🚀 Building for Production
 
 ```bash
 pnpm build
-pnpm start
+pnpm preview
 ```
 
 ## 📝 Development

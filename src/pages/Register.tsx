@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { Link, useLocation } from "wouter";
-import { Mail, Phone, Lock, Eye, EyeOff, Chrome, Facebook, User, CheckCircle2, XCircle, Building2, Package, ArrowRight, ArrowLeft, Check } from "lucide-react";
+import { Mail, Phone, Lock, Eye, EyeOff, Chrome, Facebook, User, CheckCircle2, XCircle, Building2, Package, ArrowRight, ArrowLeft } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { trpc } from "@/lib/trpc";
 import { isValidTunisiaPhone } from "@/lib/phone";
@@ -14,6 +14,7 @@ import { AUTH_TOKEN_STORAGE_KEY } from "@/const";
 import { toast } from "sonner";
 import { Navigation } from "./home/components/Navigation";
 import { Footer } from "./home/components/Footer";
+import { RegisterStepIndicator } from "./register/components/RegisterStepIndicator";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -163,28 +164,10 @@ export default function Register() {
           <div className="bg-white rounded-lg shadow-lg border p-4 md:p-6 w-full">
             <div className="space-y-6" dir="rtl">
               {/* Step Indicators */}
-              <div className="flex items-center justify-between">
-                {[1, 2, 3].map((step) => (
-                  <div key={step} className="flex items-center flex-1">
-                    <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                      currentStep >= step
-                        ? "bg-slate-900 text-white border-slate-900"
-                        : "bg-white text-slate-400 border-slate-300"
-                    }`}>
-                      {currentStep > step ? (
-                        <Check className="w-5 h-5" />
-                      ) : (
-                        <span className="text-sm font-semibold">{step}</span>
-                      )}
-                    </div>
-                    {step < totalSteps && (
-                      <div className={`flex-1 h-0.5 mx-2 ${
-                        currentStep > step ? "bg-slate-900" : "bg-slate-300"
-                      }`} />
-                    )}
-                  </div>
-                ))}
-              </div>
+              <RegisterStepIndicator
+                currentStep={currentStep}
+                totalSteps={totalSteps}
+              />
 
               <div>
                 <h1 className="text-2xl font-bold text-slate-900 mb-1">
