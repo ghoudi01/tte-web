@@ -21,7 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const reportKindOptions = [
+const reportTypeOptions = [
   { value: "rto", label: "مرتجع (RTO)" },
   { value: "fraud", label: "احتيال" },
   { value: "complaint", label: "شكوى" },
@@ -39,20 +39,22 @@ export default function Reports() {
   const { data: appContent, isLoading } = trpc.automation.getAppContent.useQuery();
   const c = appContent?.reports;
 
-  const { data: reports = [], isLoading: isReportsLoading } = trpc.orders.list.useQuery(
+  const { data: reports = [], isLoading: isReportsLoading } = trpc.reports.list.useQuery(
     { limit: 100 },
     { enabled: !!appContent }
   );
+
+  const createReportMutation = trpc.reports.create.useMutation();
 
   const isNewReport = location === "/reports/new";
   const [selectedReport, setSelectedReport] = useState<any | null>(null);
 
   const [formData, setFormData] = useState({
     clientName: "",
-    phone: "",
-    orderId: "",
+    phoneNumber: "",
+    externalOrderId: "",
     amount: "",
-    reportKind: "",
+    reportType: "",
     trackingNumber: "",
     carrier: "",
     weight: "",
@@ -63,25 +65,45 @@ export default function Reports() {
     notes: "",
   });
 
-  const isValidPhone = formData.phone === "" || isValidTunisiaPhone(formData.phone);
+  const isValidPhone = formData.phoneNumber === "" || isValidTunisiaPhone(formData.phoneNumber);
 
-  const handleSubmitNew = (e: React.FormEvent) => {
+  const handleSubmitNew = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValidTunisiaPhone(formData.phone)) {
+    if (!isValidTunisiaPhone(formData.phoneNumber)) {
       toast.error("رقم الهاتف غير صحيح. الرجاء إدخال رقم تونسي صالح.");
       return;
     }
-    if (!formData.reportKind) {
+    if (!formData.reportType) {
       toast.error("يرجى اختيار نوع التقرير / الحالة");
       return;
     }
-    toast.success("تم إرسال التقرير بنجاح");
-    setLocation("/reports");
+    try {
+      await createReportMutation.mutateAsync({
+        clientName: formData.clientName || undefined,
+        phoneNumber: formData.phoneNumber,
+        externalOrderId: formData.externalOrderId || undefined,
+        amount: formData.amount ? Number(formData.amount) : undefined,
+        reportType: formData.reportType as any,
+        trackingNumber: formData.trackingNumber || undefined,
+        carrier: formData.carrier || undefined,
+        weight: formData.weight ? Number(formData.weight) : undefined,
+        clientAddress: formData.clientAddress || undefined,
+        city: formData.city || undefined,
+        orderDate: formData.orderDate ? new Date(formData.orderDate).toISOString() : undefined,
+        productDescription: formData.productDescription || undefined,
+        notes: formData.notes || undefined,
+      });
+      toast.success("تم إرسال التقرير بنجاح");
+      setLocation("/reports");
+    } catch (error) {
+      toast.error("فشل إرسال التقرير");
+      console.error(error);
+    }
   };
 
-  const getReportKindLabel = (value: string | undefined) => {
+  const getReportTypeLabel = (value: string | undefined) => {
     if (!value) return "-";
-    const o = reportKindOptions.find((r) => r.value === value);
+    const o = reportTypeOptions.find((r) => r.value === value);
     return o?.label ?? value;
   };
 
@@ -147,12 +169,12 @@ export default function Reports() {
                     <div className="flex items-center gap-3">
                       <Package className="w-5 h-5 text-slate-600" />
                       <div>
-                        <p className="font-semibold">{report.customerName || report.phoneNumber}</p>
+                        <p className="font-semibold">{report.clientName || report.phoneNumber}</p>
                         <p className="text-sm text-slate-500">{report.phoneNumber}</p>
                       </div>
                     </div>
                     <div className="text-right">
-                      {getStatusBadge(report.verificationStatus)}
+                      {getStatusBadge(report.status)}
                       <p className="text-sm text-slate-500 mt-1">{report.createdAt ? new Date(report.createdAt).toLocaleDateString('ar-TN') : "-"}</p>
                     </div>
                   </div>
@@ -179,21 +201,21 @@ export default function Reports() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phone">{c?.labels?.phone ?? "رقم الهاتف"}</Label>
+                    <Label htmlFor="phoneNumber">{c?.labels?.phone ?? "رقم الهاتف"}</Label>
                     <Input
-                      id="phone"
+                      id="phoneNumber"
                       type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                      value={formData.phoneNumber}
+                      onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="orderId">{c?.labels?.orderId ?? "رقم الطلب"}</Label>
+                    <Label htmlFor="externalOrderId">{c?.labels?.orderId ?? "رقم الطلب"}</Label>
                     <Input
-                      id="orderId"
-                      value={formData.orderId}
-                      onChange={(e) => setFormData({ ...formData, orderId: e.target.value })}
+                      id="externalOrderId"
+                      value={formData.externalOrderId}
+                      onChange={(e) => setFormData({ ...formData, externalOrderId: e.target.value })}
                     />
                   </div>
                   <div className="space-y-2">
@@ -207,13 +229,13 @@ export default function Reports() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="reportKind">{c?.labels?.reportKind ?? "نوع التقرير"}</Label>
-                  <Select value={formData.reportKind} onValueChange={(v) => setFormData({ ...formData, reportKind: v })}>
+                  <Label htmlFor="reportType">{c?.labels?.reportKind ?? "نوع التقرير"}</Label>
+                  <Select value={formData.reportType} onValueChange={(v) => setFormData({ ...formData, reportType: v })}>
                     <SelectTrigger>
                       <SelectValue placeholder={c?.labels?.selectReportType ?? "اختر نوع التقرير"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {reportKindOptions.map((opt) => (
+                      {reportTypeOptions.map((opt) => (
                         <SelectItem key={opt.value} value={opt.value}>
                           {opt.label}
                         </SelectItem>
@@ -231,8 +253,8 @@ export default function Reports() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full">
-                  {c?.submitButton ?? "إرسال التقرير"}
+                <Button type="submit" className="w-full" disabled={createReportMutation.isPending}>
+                  {createReportMutation.isPending ? "جاري الإرسال..." : (c?.submitButton ?? "إرسال التقرير")}
                 </Button>
               </form>
             </CardContent>
@@ -250,7 +272,7 @@ export default function Reports() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="font-semibold">{c?.labels?.clientName ?? "اسم العميل"}</Label>
-                    <p>{selectedReport.customerName || selectedReport.phoneNumber || "-"}</p>
+                    <p>{selectedReport.clientName || selectedReport.phoneNumber || "-"}</p>
                   </div>
                   <div>
                     <Label className="font-semibold">{c?.labels?.phone ?? "رقم الهاتف"}</Label>
@@ -260,16 +282,16 @@ export default function Reports() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label className="font-semibold">{c?.labels?.orderId ?? "رقم الطلب"}</Label>
-                    <p>{selectedReport.id || "-"}</p>
+                    <p>{selectedReport.externalOrderId || "-"}</p>
                   </div>
                   <div>
                     <Label className="font-semibold">{c?.labels?.amount ?? "المبلغ"}</Label>
-                    <p>{selectedReport.orderAmount ? `${selectedReport.orderAmount} د.ت` : "-"}</p>
+                    <p>{selectedReport.amount ? `${selectedReport.amount} د.ت` : "-"}</p>
                   </div>
                 </div>
                 <div>
                   <Label className="font-semibold">{c?.labels?.status ?? "الحالة"}</Label>
-                  <div className="mt-1">{getStatusBadge(selectedReport.verificationStatus)}</div>
+                  <div className="mt-1">{getStatusBadge(selectedReport.status)}</div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-sm text-slate-500">

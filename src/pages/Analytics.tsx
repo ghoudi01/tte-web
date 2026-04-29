@@ -14,6 +14,8 @@ export default function Analytics() {
   const dashboardQuery = trpc.merchants.getDashboard.useQuery();
   const profileQuery = trpc.merchants.getProfile.useQuery();
 
+  const { data: reports = [] } = trpc.reports.list.useQuery({ limit: 100 });
+
   useEffect(() => {
     if (dashboardQuery.isSuccess && dashboardQuery.data === null) {
       setLocation("/merchant-setup");
@@ -48,10 +50,10 @@ export default function Analytics() {
     balance: profileQuery.data?.creditsBalance ?? 0,
   };
   const reportsStats = {
-    total: orders.length,
-    accepted: orders.filter((o) => o.verificationStatus === "verified").length,
-    pending: orders.filter((o) => o.verificationStatus === "pending").length,
-    rejected: orders.filter((o) => o.verificationStatus === "rejected").length,
+    total: reports.length,
+    accepted: reports.filter((r: any) => r.status === "accepted" || r.status === "verified" || r.status === "success").length,
+    pending: reports.filter((r: any) => r.status === "pending").length,
+    rejected: reports.filter((r: any) => r.status === "rejected" || r.status === "failed").length,
   };
   const tabFromPath =
     location === "/analytics/orders" ? "orders" :

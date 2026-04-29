@@ -11,8 +11,9 @@ import { FileText, Plus, CheckCircle2, Clock, XCircle, Package } from "lucide-re
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { isValidTunisiaPhone } from "@/lib/phone";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const reportKindOptions = [
+const reportTypeOptions = [
   { value: "rto", label: "مرتجع (RTO)" },
   { value: "fraud", label: "احتيال" },
   { value: "complaint", label: "شكوى" },
@@ -26,10 +27,10 @@ const reportKindOptions = [
 ];
 
 const staticReports = [
-  { id: 1, clientName: "أحمد محمد", phone: "+216 12 345 678", orderId: "ORD-1001", amount: 150, kind: "accepted", date: "2024-12-20", trackingNumber: "TN123456" },
-  { id: 2, clientName: "فاطمة علي", phone: "+216 23 456 789", orderId: "ORD-1002", amount: 280, kind: "pending", date: "2024-12-19", trackingNumber: "TN123457" },
-  { id: 3, clientName: "محمد حسن", phone: "+216 34 567 890", orderId: "ORD-1003", amount: 95, kind: "accepted", date: "2024-12-18", trackingNumber: "-" },
-  { id: 4, clientName: "سارة أحمد", phone: "+216 45 678 901", orderId: "ORD-1004", amount: 320, kind: "rejected", date: "2024-12-17", trackingNumber: "TN123458" },
+  { id: 1, clientName: "أحمد محمد", phoneNumber: "+216 12 345 678", externalOrderId: "ORD-1001", amount: 150, reportType: "accepted", createdAt: "2024-12-20", trackingNumber: "TN123456" },
+  { id: 2, clientName: "فاطمة علي", phoneNumber: "+216 23 456 789", externalOrderId: "ORD-1002", amount: 280, reportType: "pending", createdAt: "2024-12-19", trackingNumber: "TN123457" },
+  { id: 3, clientName: "محمد حسن", phoneNumber: "+216 34 567 890", externalOrderId: "ORD-1003", amount: 95, reportType: "accepted", createdAt: "2024-12-18", trackingNumber: "-" },
+  { id: 4, clientName: "سارة أحمد", phoneNumber: "+216 45 678 901", externalOrderId: "ORD-1004", amount: 320, reportType: "rejected", createdAt: "2024-12-17", trackingNumber: "TN123458" },
 ];
 
 export default function Reports() {
@@ -37,13 +38,18 @@ export default function Reports() {
   const { data: appContent } = trpc.automation.getAppContent.useQuery();
   const c = appContent?.reports;
   const isNewReport = location === "/reports/new";
-  const [reports] = useState(staticReports);
+  const { data: reports = [], isLoading: isReportsLoading } = trpc.reports.list.useQuery(
+    { limit: 100 },
+    { enabled: !isNewReport }
+  );
+  const createReportMutation = trpc.reports.create.useMutation();
+
   const [formData, setFormData] = useState({
     clientName: "",
-    phone: "",
-    orderId: "",
+    phoneNumber: "",
+    externalOrderId: "",
     amount: "",
-    reportKind: "",
+    reportType: "",
     trackingNumber: "",
     carrier: "",
     weight: "",
@@ -53,28 +59,48 @@ export default function Reports() {
     productDescription: "",
     notes: "",
   });
-  const isValidPhone = formData.phone === "" || isValidTunisiaPhone(formData.phone);
+  const isValidPhone = formData.phoneNumber === "" || isValidTunisiaPhone(formData.phoneNumber);
 
-  const handleSubmitNew = (e: React.FormEvent) => {
+  const handleSubmitNew = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValidTunisiaPhone(formData.phone)) {
+    if (!isValidTunisiaPhone(formData.phoneNumber)) {
       toast.error("رقم الهاتف غير صحيح. الرجاء إدخال رقم تونسي صالح.");
       return;
     }
-    if (!formData.reportKind) {
+    if (!formData.reportType) {
       toast.error("يرجى اختيار نوع التقرير / الحالة");
       return;
     }
-    toast.success("تم إرسال التقرير بنجاح");
-    setLocation("/reports");
+    try {
+      await createReportMutation.mutateAsync({
+        clientName: formData.clientName || undefined,
+        phoneNumber: formData.phoneNumber,
+        externalOrderId: formData.externalOrderId || undefined,
+        amount: formData.amount ? Number(formData.amount) : undefined,
+        reportType: formData.reportType as any,
+        trackingNumber: formData.trackingNumber || undefined,
+        carrier: formData.carrier || undefined,
+        weight: formData.weight ? Number(formData.weight) : undefined,
+        clientAddress: formData.clientAddress || undefined,
+        city: formData.city || undefined,
+        orderDate: formData.orderDate ? new Date(formData.orderDate).toISOString() : undefined,
+        productDescription: formData.productDescription || undefined,
+        notes: formData.notes || undefined,
+      });
+      toast.success("تم إرسال التقرير بنجاح");
+      setLocation("/reports");
+    } catch (error) {
+      toast.error("فشل إرسال التقرير");
+      console.error(error);
+    }
   };
 
-  const getReportKindLabel = (value: string) => {
-    const o = reportKindOptions.find((r) => r.value === value);
+  const getReportTypeLabel = (value: string) => {
+    const o = reportTypeOptions.find((r) => r.value === value);
     return o?.label ?? value;
   };
 
-  const getReportKindBadge = (value: string) => {
+  const getReportTypeBadge = (value: string) => {
     switch (value) {
       case "accepted":
         return <Badge className="bg-green-100 text-green-800"><CheckCircle2 className="w-3 h-3 mr-1" /> مقبول</Badge>;
@@ -86,9 +112,21 @@ export default function Reports() {
       case "rejected":
         return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> مرفوض</Badge>;
       default:
-        return <Badge variant="outline">{getReportKindLabel(value)}</Badge>;
+        return <Badge variant="outline">{getReportTypeLabel(value)}</Badge>;
     }
   };
+
+  if (isNewReport && isReportsLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4" dir="rtl">
+        <div className="max-w-2xl mx-auto space-y-4">
+          <Skeleton className="h-10 w-48" />
+          <Skeleton className="h-5 w-72" />
+          <Skeleton className="h-96 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   if (isNewReport) {
     return (
@@ -119,12 +157,12 @@ export default function Reports() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="phone">رقم الهاتف *</Label>
+                      <Label htmlFor="phoneNumber">رقم الهاتف *</Label>
                       <Input
-                        id="phone"
+                        id="phoneNumber"
                         type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        value={formData.phoneNumber}
+                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                         placeholder="+216 XX XXX XXX"
                         className={!isValidPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                         required
@@ -152,11 +190,11 @@ export default function Reports() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="orderId">رقم الطلب *</Label>
+                      <Label htmlFor="externalOrderId">رقم الطلب *</Label>
                       <Input
-                        id="orderId"
-                        value={formData.orderId}
-                        onChange={(e) => setFormData({ ...formData, orderId: e.target.value })}
+                        id="externalOrderId"
+                        value={formData.externalOrderId}
+                        onChange={(e) => setFormData({ ...formData, externalOrderId: e.target.value })}
                         placeholder="ORD-XXXX"
                         required
                       />
@@ -238,14 +276,14 @@ export default function Reports() {
                   <div className="space-y-2">
                     <Label>نوع التقرير / الحالة *</Label>
                     <Select
-                      value={formData.reportKind}
-                      onValueChange={(v) => setFormData({ ...formData, reportKind: v })}
+                      value={formData.reportType}
+                      onValueChange={(v) => setFormData({ ...formData, reportType: v })}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="اختر نوع التقرير أو الحالة" />
                       </SelectTrigger>
                       <SelectContent>
-                        {reportKindOptions.map((o) => (
+                        {reportTypeOptions.map((o) => (
                           <SelectItem key={o.value} value={o.value}>
                             {o.label}
                           </SelectItem>
@@ -267,7 +305,9 @@ export default function Reports() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button type="submit">إرسال التقرير</Button>
+                  <Button type="submit" disabled={createReportMutation.isPending}>
+                    {createReportMutation.isPending ? "جاري الإرسال..." : "إرسال التقرير"}
+                  </Button>
                   <Button type="button" variant="outline" onClick={() => setLocation("/reports")}>
                     إلغاء
                   </Button>
@@ -313,18 +353,18 @@ export default function Reports() {
                   </tr>
                 </thead>
                 <tbody>
-                  {reports.map((r) => {
-                    const row = r as { kind?: string; trackingNumber?: string };
-                    const kind = row.kind ?? "";
+                  {reports.map((r: any) => {
+                    const row = r as { reportType?: string; trackingNumber?: string };
+                    const reportType = row.reportType ?? "";
                     return (
                       <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="py-3 px-4 font-medium">{r.clientName}</td>
-                        <td className="py-3 px-4 font-mono">{r.phone}</td>
-                        <td className="py-3 px-4">{r.orderId}</td>
-                        <td className="py-3 px-4">{getReportKindBadge(kind)}</td>
-                        <td className="py-3 px-4 font-mono text-slate-600">{row.trackingNumber ?? "-"}</td>
-                        <td className="py-3 px-4">{r.amount} د.ت</td>
-                        <td className="py-3 px-4 text-slate-600">{r.date}</td>
+                        <td className="py-3 px-4 font-mono">{r.phoneNumber}</td>
+                        <td className="py-3 px-4">{r.externalOrderId || "-"}</td>
+                        <td className="py-3 px-4">{getReportTypeBadge(reportType)}</td>
+                        <td className="py-3 px-4 font-mono text-slate-600">{row.trackingNumber || "-"}</td>
+                        <td className="py-3 px-4">{r.amount ?? "-"} د.ت</td>
+                        <td className="py-3 px-4 text-slate-600">{r.createdAt ? new Date(r.createdAt).toLocaleDateString('ar-TN') : "-"}</td>
                       </tr>
                     );
                   })}
