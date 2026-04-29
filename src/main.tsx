@@ -9,6 +9,15 @@ import { getLoginUrl } from "./const";
 import "./index.css";
 
 const queryClient = new QueryClient();
+const resolveTrpcUrl = () => {
+  const baseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (!baseUrl) return "/api/trpc";
+
+  const normalizedBase = baseUrl.replace(/\/+$/, "");
+  if (normalizedBase.endsWith("/api/trpc")) return normalizedBase;
+  if (normalizedBase.endsWith("/api")) return `${normalizedBase}/trpc`;
+  return `${normalizedBase}/api/trpc`;
+};
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
@@ -40,7 +49,7 @@ queryClient.getMutationCache().subscribe(event => {
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "/api/trpc",
+      url: resolveTrpcUrl(),
       transformer: superjson,
       fetch(input, init) {
         return globalThis.fetch(input, {
