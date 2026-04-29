@@ -14,7 +14,8 @@ export default function Analytics() {
   const dashboardQuery = trpc.merchants.getDashboard.useQuery();
   const profileQuery = trpc.merchants.getProfile.useQuery();
 
-  const { data: reports = [] } = trpc.reports.list.useQuery({ limit: 100 });
+  const { data: reportsResponse } = trpc.reports.list.useQuery({ limit: 100 });
+  const reports = reportsResponse?.items ?? [];
 
   useEffect(() => {
     if (dashboardQuery.isSuccess && dashboardQuery.data === null) {

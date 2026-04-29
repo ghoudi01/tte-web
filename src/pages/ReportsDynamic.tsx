@@ -39,10 +39,11 @@ export default function Reports() {
   const { data: appContent, isLoading } = trpc.automation.getAppContent.useQuery();
   const c = appContent?.reports;
 
-  const { data: reports = [], isLoading: isReportsLoading } = trpc.reports.list.useQuery(
+  const { data: response, isLoading: isReportsLoading } = trpc.reports.list.useQuery(
     { limit: 100 },
     { enabled: !!appContent }
   );
+  const reports = response?.items ?? [];
 
   const createReportMutation = trpc.reports.create.useMutation();
 
