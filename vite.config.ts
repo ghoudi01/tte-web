@@ -14,7 +14,6 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
-      "@server": path.resolve(import.meta.dirname, "..", "server", "src"),
       "@shared": path.resolve(import.meta.dirname, "..", "server", "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
@@ -23,7 +22,7 @@ export default defineConfig({
   root: path.resolve(import.meta.dirname),
   publicDir: path.resolve(import.meta.dirname, "public"),
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist"),
+    outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
   },
   server: {

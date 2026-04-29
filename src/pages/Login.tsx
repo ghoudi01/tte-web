@@ -11,7 +11,6 @@ import {
 import { Link, useLocation } from "wouter";
 import { Mail, Phone, Lock, Eye, EyeOff } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { AUTH_TOKEN_STORAGE_KEY } from "@/const";
 import { toast } from "sonner";
 import { Navigation } from "./home/components/Navigation";
 import { Footer } from "./home/components/Footer";
@@ -24,18 +23,9 @@ export default function Login() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: async (result) => {
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem(AUTH_TOKEN_STORAGE_KEY, result.token);
-      }
-      utils.auth.me.setData(undefined, result.user);
+    onSuccess: () => {
       void utils.auth.me.invalidate();
-      try {
-        const profile = await utils.merchants.getProfile.fetch();
-        setLocation(profile ? "/dashboard" : "/merchant-setup");
-      } catch {
-        setLocation("/merchant-setup");
-      }
+      setLocation("/dashboard");
     },
     onError: (err) => {
       toast.error(err.message ?? "فشل تسجيل الدخول");
@@ -115,15 +105,14 @@ export default function Login() {
                     </button>
                     <button
                       type="button"
-                      disabled
-                      className={`flex-1 py-1.5 px-2 rounded text-xs font-medium transition-colors flex items-center justify-center gap-1 cursor-not-allowed ${
+                      onClick={() => setLoginMethod("phone")}
+                      className={`flex-1 py-1.5 px-2 rounded text-xs font-medium transition-colors ${
                         loginMethod === "phone"
                           ? "bg-white text-slate-900 shadow-sm"
-                          : "text-slate-400"
+                          : "text-slate-600 hover:text-slate-900"
                       }`}
                     >
                       {login?.tabPhone ?? "هاتف"}
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">قريباً</span>
                     </button>
                   </div>
 
@@ -158,7 +147,7 @@ export default function Login() {
                             placeholder={login?.placeholderPassword ?? "••••••••"}
                             value={formData.password}
                             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                            className="pr-9 pl-9 h-9 text-sm"
+                            className="pr-9 h-9 text-sm"
                             required
                           />
                           <button
@@ -300,4 +289,3 @@ export default function Login() {
     </div>
   );
 }
-

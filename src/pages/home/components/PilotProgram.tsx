@@ -95,7 +95,7 @@ export function PilotProgram() {
                   dir="ltr"
                 />
               </div>
-              <Button 
+              <Button
                 type="submit"
                 className="w-full bg-gradient-to-r from-teal-600 to-teal-700 text-white hover:from-teal-700 hover:to-teal-800 py-4 font-bold text-base rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
               >
@@ -112,4 +112,3 @@ export function PilotProgram() {
     </section>
   );
 }
-

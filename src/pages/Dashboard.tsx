@@ -1,15 +1,27 @@
 import { useMemo } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip as ChartTooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
   Phone,
   FileText,
   Plug,
+  Sparkles,
   TrendingUp,
   AlertTriangle,
   CheckCircle2,
@@ -33,6 +45,7 @@ export default function Dashboard() {
     { id: "phone-verification", label: "تحقق من رقم", path: "/phone-verification" },
     { id: "reports", label: "إضافة تقرير", path: "/reports" },
     { id: "plugins", label: "إدارة الإضافات", path: "/plugins" },
+    { id: "innovation", label: "أفكار MVP", path: "/innovation-lab" },
   ];
   const actionsToShow: { id: string; label: string; path: string }[] =
     dashboard?.quickActions && dashboard.quickActions.length > 0
@@ -55,39 +68,18 @@ export default function Dashboard() {
     "phone-verification": "تحقق من رقم",
     reports: "إضافة تقرير",
     plugins: "إدارة الإضافات",
+    innovation: "أفكار MVP",
   };
 
   if (dashboardQuery.isLoading || dashboardQuery.isFetching) {
     return (
-      <div className="p-6 space-y-4" dir="rtl">
-        <Skeleton className="h-9 w-48" />
-        <Skeleton className="h-5 w-64" />
-        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-          <Skeleton className="h-28 w-full" />
-        </div>
+      <div className="p-6" dir="rtl">
+        {dashboard?.loadingText ?? "جاري تحميل لوحة التحكم..."}
       </div>
     );
   }
 
   if (dashboardQuery.error) {
-    const isMerchantMissing = (dashboardQuery.error as { data?: { code?: string } })?.data?.code === "NOT_FOUND";
-    if (isMerchantMissing) {
-      return (
-        <div className="p-6" dir="rtl">
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <p>حساب التاجر غير موجود بعد. أكمل إعداد الحساب للمتابعة.</p>
-              <Button onClick={() => setLocation("/merchant-setup")}>
-                إكمال إعداد حساب التاجر
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
     return (
       <div className="p-6" dir="rtl">
         <Card>
@@ -104,7 +96,7 @@ export default function Dashboard() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black text-slate-900">
-            {dashboard?.pageTitle ?? "لوحة التحكم"}
+            {dashboard?.pageTitle ?? "لوحة تحكم مبسطة"}
           </h1>
           <p className="text-slate-600">
             {dashboard?.pageSubtitle ?? "كل ما تحتاجه اليوم في مكان واحد."}
@@ -166,8 +158,8 @@ export default function Dashboard() {
           {actionsToShow.map((action, i) => {
             const label = action.label ?? quickActionLabels[action.id] ?? action.id;
             const path = action.path ?? "/dashboard";
-            const Icon = i === 0 ? Phone : i === 1 ? FileText : Plug;
-            const variant = i === 0 ? "default" : "outline";
+            const Icon = i === 0 ? Phone : i === 1 ? FileText : i === 2 ? Plug : Sparkles;
+            const variant = i === 0 ? "default" : i === 3 ? "secondary" : "outline";
             return (
               <Button
                 key={path + i}
@@ -184,7 +176,161 @@ export default function Dashboard() {
           })}
         </CardContent>
       </Card>
-    </div>
 
+      <div className="grid lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-emerald-700">
+              <TrendingUp className="w-5 h-5" /> تحليل النمو والتوجهات
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[250px] w-full mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={analytics?.recentOrdersData || []}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis
+                    dataKey="date"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+                  <ChartTooltip
+                    contentStyle={{
+                      borderRadius: "8px",
+                      border: "none",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+                    }}
+                  />
+                  <Bar
+                    dataKey="count"
+                    name="إجمالي الطلبات"
+                    fill="#10b981"
+                    radius={[4, 4, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="verified"
+                    name="تم التحقق"
+                    fill="#3b82f6"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-indigo-700">
+              <Sparkles className="w-5 h-5" /> التوزيع الجغرافي (تونس)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={analytics?.regionalDistribution || []}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="count"
+                    nameKey="region"
+                  >
+                    {[
+                      "#10b981",
+                      "#3b82f6",
+                      "#f59e0b",
+                      "#ef4444",
+                      "#8b5cf6",
+                    ].map((color, index) => (
+                      <Cell key={`cell-${index}`} fill={color} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="grid grid-cols-2 gap-2 mt-4 text-xs">
+                {analytics?.regionalDistribution?.map((d: any, i: number) => (
+                  <div key={d.region} className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{
+                        backgroundColor: [
+                          "#10b981",
+                          "#3b82f6",
+                          "#f59e0b",
+                          "#ef4444",
+                          "#8b5cf6",
+                        ][i],
+                      }}
+                    />
+                    <span className="text-slate-600">
+                      {d.region}: {d.count}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4" /> {cards?.recentOrders ?? "آخر الطلبات"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            {orders.slice(0, 6).map(o => (
+              <div
+                key={o.id}
+                className="flex items-center justify-between border rounded-lg p-2"
+              >
+                <span className="font-mono">{o.phoneNumber || "-"}</span>
+                <span>{fmtCurrency(o.orderAmount || 0)}</span>
+              </div>
+            ))}
+            {orders.length === 0 && (
+              <p className="text-slate-500">{cards?.noOrders ?? "لا توجد طلبات بعد."}</p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{cards?.riskSummary ?? "ملخص المخاطر"}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm">
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <span className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600" />{" "}
+                {cards?.lowRiskOrders ?? "طلبات منخفضة المخاطر"}
+              </span>
+              <b>
+                {Math.max(
+                  0,
+                  Math.round(stats.totalOrders * (stats.successRate / 100))
+                )}
+              </b>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <span className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-600" />{" "}
+                {cards?.needsReview ?? "طلبات تحتاج مراجعة"}
+              </span>
+              <b>{Math.max(0, Math.round(stats.totalOrders * 0.2))}</b>
+            </div>
+            <p className="text-slate-500">
+              {cards?.tip ?? "نصيحة: فعّل قواعد \"السياسة التلقائية\" من صفحات MVP لتقليل الـ RTO."}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
   );
 }

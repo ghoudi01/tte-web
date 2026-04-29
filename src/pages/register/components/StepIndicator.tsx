@@ -1,18 +1,16 @@
 import { Check } from "lucide-react";
 
-type RegisterStepIndicatorProps = {
+interface StepIndicatorProps {
   currentStep: number;
   totalSteps: number;
-};
+}
 
-export function RegisterStepIndicator({
-  currentStep,
-  totalSteps,
-}: RegisterStepIndicatorProps) {
+export function StepIndicator({ currentStep, totalSteps }: StepIndicatorProps) {
   return (
     <div className="flex items-center justify-between">
-      {Array.from({ length: totalSteps }, (_, index) => index + 1).map(
-        (step) => (
+      {[...Array(totalSteps)].map((_, index) => {
+        const step = index + 1;
+        return (
           <div key={step} className="flex items-center flex-1">
             <div
               className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
@@ -35,8 +33,8 @@ export function RegisterStepIndicator({
               />
             )}
           </div>
-        )
-      )}
+        );
+      })}
     </div>
   );
 }

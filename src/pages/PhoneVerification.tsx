@@ -3,36 +3,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { AlertCircle, CheckCircle2, Coins } from "lucide-react";
 import { useLocation } from "wouter";
 import { CREDITS } from "@/credits";
 import { trpc } from "@/lib/trpc";
-import { isValidTunisiaPhone } from "@/lib/phone";
+
+const MOCK_CREDITS_BALANCE = 42;
 
 export default function PhoneVerification() {
   const [, setLocation] = useLocation();
-  const { data: appContent, isLoading: isAppContentLoading } =
-    trpc.automation.getAppContent.useQuery();
-  const profileQuery = trpc.merchants.getProfile.useQuery();
-  const utils = trpc.useUtils();
+  const { data: appContent } = trpc.automation.getAppContent.useQuery();
   const c = appContent?.phoneVerification;
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneToCheck, setPhoneToCheck] = useState<string | null>(null);
 
   const checkQuery = trpc.phoneVerification.check.useQuery(
     { phoneNumber: phoneToCheck! },
-    { enabled: !!phoneToCheck, refetchOnWindowFocus: false }
+    { enabled: !!phoneToCheck }
   );
-  const reportVerdictMutation = trpc.phoneVerification.reportVerdict.useMutation();
   const result = checkQuery.data ?? null;
   const isChecking = checkQuery.isFetching;
-  const creditsBalance = result?.creditsBalance ?? profileQuery.data?.creditsBalance ?? 0;
+  const creditsBalance = MOCK_CREDITS_BALANCE;
 
   const canCheck = creditsBalance >= CREDITS.CHECK_PHONE;
   const isLowBalance = creditsBalance < CREDITS.LOW_BALANCE_THRESHOLD;
-  const isValidPhone = phoneNumber.trim() === "" || isValidTunisiaPhone(phoneNumber);
 
   const handleVerify = (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,36 +35,11 @@ export default function PhoneVerification() {
       toast.error("يرجى إدخال رقم الهاتف");
       return;
     }
-    if (!isValidTunisiaPhone(phoneNumber)) {
-      toast.error("رقم الهاتف غير صحيح. هذا الحقل يدعم الأرقام التونسية فقط.");
-      return;
-    }
     if (!canCheck) {
       toast.error(`رصيدك غير كافٍ. فحص رقم واحد يستهلك ${CREDITS.CHECK_PHONE} اعتمادات.`);
       return;
     }
     setPhoneToCheck(phoneNumber.trim());
-  };
-
-  const handleReportVerdict = async (verdict: "spam" | "not_spam") => {
-    if (!result?.phoneNumber) {
-      toast.error("قم بالتحقق من الرقم أولاً");
-      return;
-    }
-    try {
-      await reportVerdictMutation.mutateAsync({
-        phoneNumber: result.phoneNumber,
-        verdict,
-      });
-      toast.success(
-        verdict === "spam"
-          ? "تم تسجيل هذا الرقم كـ SPAM"
-          : "تم تسجيل هذا الرقم كـ NOT SPAM"
-      );
-      await utils.merchants.getProfile.invalidate();
-    } catch (error) {
-      toast.error("فشل حفظ تقييم الرقم");
-    }
   };
 
   useEffect(() => {
@@ -106,21 +76,6 @@ export default function PhoneVerification() {
         return "bg-slate-50 border-slate-200";
     }
   };
-
-  if (isAppContentLoading || profileQuery.isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4" dir="rtl">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Skeleton className="h-9 w-48" />
-          <Skeleton className="h-5 w-72" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Skeleton className="h-[420px] lg:col-span-2" />
-            <Skeleton className="h-[420px]" />
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4" dir="rtl">
@@ -161,12 +116,8 @@ export default function PhoneVerification() {
                       placeholder="+216 XX XXX XXX"
                       value={phoneNumber}
                       onChange={(e) => setPhoneNumber(e.target.value)}
-                      className={!isValidPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                       required
                     />
-                    {!isValidPhone && (
-                      <p className="text-xs text-red-500">الرجاء إدخال رقم تونسي صالح (8 أرقام).</p>
-                    )}
                   </div>
 
                   <Button type="submit" disabled={isChecking || !canCheck} className="w-full">
@@ -255,14 +206,6 @@ export default function PhoneVerification() {
                       <span className="text-sm text-slate-600">الارتجاعات</span>
                       <span className="font-semibold">{result.rtoCount}</span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-slate-600">تقارير SPAM</span>
-                      <span className="font-semibold text-red-600">{result.spamReports}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-slate-600">تقارير NOT SPAM</span>
-                      <span className="font-semibold text-green-600">{result.notSpamReports}</span>
-                    </div>
                   </div>
 
                   <div className={`p-3 rounded-lg border ${getRiskBgColor(result.riskLevel)}`}>
@@ -274,35 +217,6 @@ export default function PhoneVerification() {
                       {result.riskLevel === "high" &&
                         "✗ مخاطر عالية. يُنصح بعدم المتابعة أو طلب دفع مسبق."}
                     </p>
-                  </div>
-
-                  <div className="pt-4 border-t border-slate-200 space-y-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={() => setLocation("/reports/new")}
-                    >
-                      إضافة تقرير
-                    </Button>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        disabled={reportVerdictMutation.isPending}
-                        onClick={() => handleReportVerdict("spam")}
-                      >
-                        SPAM
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        disabled={reportVerdictMutation.isPending}
-                        onClick={() => handleReportVerdict("not_spam")}
-                      >
-                        NOT SPAM
-                      </Button>
-                    </div>
                   </div>
                 </CardContent>
               </Card>

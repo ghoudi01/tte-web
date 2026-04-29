@@ -23,9 +23,9 @@ export function Integrations() {
           backgroundSize: '60px 60px'
         }} />
       </div>
-      
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -39,7 +39,7 @@ export function Integrations() {
             {subline}
           </p>
         </motion.div>
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -74,4 +74,3 @@ export function Integrations() {
     </section>
   );
 }
-

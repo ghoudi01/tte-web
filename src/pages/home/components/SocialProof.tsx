@@ -14,21 +14,21 @@ export function SocialProof() {
   return (
     <section className="h-[25vh] flex items-center bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-y border-slate-700 w-full overflow-hidden">
       <div className="w-full px-4 sm:px-6 lg:px-8 flex items-center py-4">
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={staggerContainer}
           className="flex flex-col md:flex-row items-center md:justify-between gap-6 w-full"
         >
-          <motion.div 
+          <motion.div
             variants={fadeInLeft}
             className="flex items-center gap-8"
           >
             {stats.map((stat, idx) => (
               <div key={idx} className="flex items-center gap-8">
                 <div className="text-center">
-                  <motion.div 
+                  <motion.div
                     initial={{ scale: 0 }}
                     whileInView={{ scale: 1 }}
                     viewport={{ once: true }}
@@ -43,7 +43,7 @@ export function SocialProof() {
               </div>
             ))}
           </motion.div>
-          <motion.div 
+          <motion.div
             variants={fadeInRight}
             className="text-right max-w-md md:max-w-none md:ml-auto"
           >
@@ -53,7 +53,7 @@ export function SocialProof() {
             </p>
             <p className="text-sm text-slate-400">
               {socialProof?.subline ??
-                "مبني لتونس والأسواق المماثلة"}
+                "مبني لتونس والأسواق المماثلة • برنامج تجريبي متاح للمتبنين الأوائل"}
             </p>
           </motion.div>
         </motion.div>
@@ -61,4 +61,3 @@ export function SocialProof() {
     </section>
   );
 }
-

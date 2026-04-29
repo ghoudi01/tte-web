@@ -19,7 +19,7 @@ export function Solution() {
   return (
     <section id="solution" className="pt-4 pb-12 md:pt-6 md:pb-16 bg-gradient-to-b from-slate-50 via-white to-slate-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -33,7 +33,7 @@ export function Solution() {
             {subtitle}
           </p>
         </motion.div>
-        
+
         <div className="grid lg:grid-cols-2 gap-6 items-stretch">
           <motion.div
             initial="hidden"
@@ -47,7 +47,7 @@ export function Solution() {
                 {highlightText}
               </p>
             </div>
-            
+
             <div className="bg-white rounded-lg p-6 border-2 border-slate-200 shadow-lg flex-1 flex flex-col" dir="rtl">
               <div className="flex items-center justify-start gap-2 mb-4">
                 <h3 className="text-lg font-bold text-slate-900">{trustScoreTitle}</h3>
@@ -61,7 +61,7 @@ export function Solution() {
                       <span className="text-sm font-medium text-slate-700">{item.label}</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-2" dir="rtl">
-                      <div 
+                      <div
                         className="bg-gradient-to-r from-teal-600 to-teal-700 h-2 rounded-full transition-all"
                         style={{ width: `${item.score}%` }}
                       />
@@ -80,13 +80,13 @@ export function Solution() {
             className="order-1 lg:order-2 relative"
           >
             {/* Solution Image */}
-            <motion.div 
+            <motion.div
               whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.3 }}
               className="relative rounded-lg overflow-hidden shadow-xl border-2 border-slate-200 w-full"
             >
-              <img 
-                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80" 
+              <img
+                src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80"
                 alt="AI Solution"
                 className="w-full h-full object-cover"
               />
@@ -111,4 +111,3 @@ export function Solution() {
     </section>
   );
 }
-

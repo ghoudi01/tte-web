@@ -6,21 +6,9 @@ import { Check, Coins, Zap } from "lucide-react";
 import { Navigation } from "./home/components/Navigation";
 import { Footer } from "./home/components/Footer";
 import { CREDIT_PACKS } from "@/credits";
-import { useAuth } from "@/_core/hooks/useAuth";
-import { toast } from "sonner";
 
 export default function Pricing() {
   const [, setLocation] = useLocation();
-  const { isAuthenticated } = useAuth();
-
-  const handleBuyClick = () => {
-    if (isAuthenticated) {
-      toast.info("دفع الاعتمادات قريباً");
-      setLocation("/credits");
-    } else {
-      setLocation("/register?redirect=/pricing");
-    }
-  };
 
   return (
     <div className="min-h-screen bg-white text-slate-900 flex flex-col" dir="rtl">
@@ -122,13 +110,13 @@ export default function Pricing() {
                         الاعتمادات لا تنتهي صلاحيتها
                       </li>
                     </ul>
-                     <Button
-                       className="w-full"
-                       variant={pack.highlighted ? "default" : "outline"}
-                       onClick={handleBuyClick}
-                     >
-                       شراء الاعتمادات
-                     </Button>
+                    <Button
+                      className="w-full"
+                      variant={pack.highlighted ? "default" : "outline"}
+                      onClick={() => setLocation("/register")}
+                    >
+                      شراء الاعتمادات
+                    </Button>
                   </CardContent>
                 </Card>
               );

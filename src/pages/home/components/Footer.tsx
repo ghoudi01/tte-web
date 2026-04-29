@@ -44,15 +44,15 @@ export function Footer() {
               {description}
             </p>
             <div className="flex items-center gap-3">
-              <a 
-                href={`mailto:${email}`} 
+              <a
+                href={`mailto:${email}`}
                 className="w-12 h-12 bg-slate-800 hover:bg-teal-600 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg"
                 aria-label="Email"
               >
                 <Mail className="w-5 h-5" />
               </a>
-              <a 
-                href={`tel:${phone.replace(/\s/g, "")}`} 
+              <a
+                href={`tel:${phone.replace(/\s/g, "")}`}
                 className="w-12 h-12 bg-slate-800 hover:bg-teal-600 rounded-xl flex items-center justify-center transition-all duration-300 hover:scale-110 shadow-lg"
                 aria-label="Phone"
               >
@@ -70,8 +70,8 @@ export function Footer() {
             <ul className="space-y-3">
               {productLinks.map((link, i) => (
                 <li key={i}>
-                  <button 
-                    onClick={() => link.targetId && document.getElementById(link.targetId)?.scrollIntoView({ behavior: "smooth" })} 
+                  <button
+                    onClick={() => link.targetId && document.getElementById(link.targetId)?.scrollIntoView({ behavior: "smooth" })}
                     className="text-sm text-slate-400 hover:text-teal-400 transition-colors duration-200 flex items-center gap-2 group"
                   >
                     <span className="w-1.5 h-1.5 bg-slate-600 rounded-full group-hover:bg-teal-400 transition-colors"></span>
@@ -87,8 +87,8 @@ export function Footer() {
             <ul className="space-y-3">
               {companyLinks.map((link, i) => (
                 <li key={i}>
-                  <button 
-                    onClick={() => link.targetId && document.getElementById(link.targetId)?.scrollIntoView({ behavior: "smooth" })} 
+                  <button
+                    onClick={() => link.targetId && document.getElementById(link.targetId)?.scrollIntoView({ behavior: "smooth" })}
                     className="text-sm text-slate-400 hover:text-teal-400 transition-colors duration-200 flex items-center gap-2 group"
                   >
                     <span className="w-1.5 h-1.5 bg-slate-600 rounded-full group-hover:bg-teal-400 transition-colors"></span>
@@ -120,4 +120,3 @@ export function Footer() {
     </footer>
   );
 }
-

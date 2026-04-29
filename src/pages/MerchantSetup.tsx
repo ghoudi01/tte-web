@@ -6,7 +6,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { isValidTunisiaPhone } from "@/lib/phone";
 
 export default function MerchantSetup() {
   const [, setLocation] = useLocation();
@@ -40,14 +39,8 @@ export default function MerchantSetup() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValidTunisiaPhone(formData.phone)) {
-      toast.error("رقم الهاتف غير صحيح. الرجاء إدخال رقم تونسي صالح.");
-      return;
-    }
     createMutation.mutate(formData);
   };
-
-  const isValidPhone = formData.phone === "" || isValidTunisiaPhone(formData.phone);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-12 px-4" dir="rtl">
@@ -95,16 +88,11 @@ export default function MerchantSetup() {
                   <Input
                     id="phone"
                     name="phone"
-                    type="tel"
                     value={formData.phone}
                     onChange={handleChange}
                     placeholder="+216 XX XXX XXX"
-                    className={!isValidPhone ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""}
                     required
                   />
-                  {!isValidPhone && (
-                    <p className="text-xs text-red-500">الرجاء إدخال رقم تونسي صالح (8 أرقام).</p>
-                  )}
                 </div>
 
                 <div className="space-y-2">

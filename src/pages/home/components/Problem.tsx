@@ -22,7 +22,7 @@ export function Problem() {
   return (
     <section id="problem" className="pt-4 pb-12 md:pt-6 md:pb-16 bg-gradient-to-b from-white via-slate-50/30 to-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
@@ -39,7 +39,7 @@ export function Problem() {
             {subtitle}
           </p>
         </motion.div>
-        
+
         <div className="grid lg:grid-cols-2 gap-8">
           <motion.div
             initial="hidden"
@@ -49,15 +49,15 @@ export function Problem() {
             className="relative"
           >
             <div className="relative rounded-2xl overflow-hidden shadow-xl border-2 border-slate-200 h-full min-h-[300px]">
-              <img 
-                src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80" 
+              <img
+                src="https://images.unsplash.com/photo-1554224155-6726b3ff858f?w=800&q=80"
                 alt="Failed Delivery Problem"
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-800/50 to-transparent"></div>
-              
+
               <div className="absolute top-4 left-4 right-4">
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
@@ -77,12 +77,12 @@ export function Problem() {
               </div>
             </div>
           </motion.div>
-          
+
           <div className="grid grid-cols-1 gap-4">
             {stats.map((item, idx) => {
               const Icon = item.iconKey ? homeIconMap[item.iconKey] : null;
               return (
-                <motion.div 
+                <motion.div
                   key={idx}
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
@@ -106,4 +106,3 @@ export function Problem() {
     </section>
   );
 }
-

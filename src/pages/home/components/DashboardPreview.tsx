@@ -5,7 +5,7 @@ export function DashboardPreview() {
   return (
     <section className="pt-2 pb-12 md:pt-3 md:pb-16 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -19,7 +19,7 @@ export function DashboardPreview() {
             راقب أداءك في الوقت الفعلي واتخذ قرارات مدعومة بالبيانات
           </p>
         </motion.div>
-        
+
         {/* Dashboard Image */}
         <motion.div
           initial="hidden"
@@ -45,7 +45,7 @@ export function DashboardPreview() {
                       <p className="text-xs text-slate-400">آخر 30 يوماً</p>
                     </div>
                   </div>
-                  
+
                   {/* Stats Grid */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                     {[
@@ -61,7 +61,7 @@ export function DashboardPreview() {
                       </div>
                     ))}
                   </div>
-                  
+
                   {/* Order List Preview */}
                   <div className="bg-slate-800 rounded-lg p-3 border border-slate-700">
                     <div className="text-xs font-semibold text-white mb-2 text-right">طلبات حديثة</div>
@@ -99,4 +99,3 @@ export function DashboardPreview() {
     </section>
   );
 }
-

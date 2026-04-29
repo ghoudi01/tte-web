@@ -71,7 +71,7 @@ export function BusinessModel() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -85,7 +85,7 @@ export function BusinessModel() {
             اشترِ اعتمادات، استهلكها للتحقق، واكسبها بالتقارير والإحالات
           </p>
         </motion.div>
-        
+
         <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
           {plans.map((plan, idx) => (
             <motion.div
@@ -111,7 +111,7 @@ export function BusinessModel() {
                 </div>
                 <h3 className="text-xl font-bold text-slate-900 mb-2">{plan.title}</h3>
                 <p className="text-sm text-slate-600 mb-4">{plan.description}</p>
-                
+
                 <div className="mb-6">
                   <div className="flex items-baseline gap-2">
                     <span className="text-3xl font-black text-slate-900">{plan.price}</span>

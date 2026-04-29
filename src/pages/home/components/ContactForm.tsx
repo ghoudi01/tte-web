@@ -2,14 +2,9 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { Mail, User, MessageSquare, Send, Phone, Building, FileText, Globe, Package } from "lucide-react";
-import { toast } from "sonner";
-import { isValidTunisiaPhone } from "@/lib/phone";
-import { trpc } from "@/lib/trpc";
 import { fadeInUp, scaleIn } from "./animations";
 
 export function ContactForm() {
-  const { data: homeContent } = trpc.automation.getHomeContent.useQuery();
-  const support = homeContent?.support;
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,14 +18,8 @@ export function ContactForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValidTunisiaPhone(formData.phone)) {
-      toast.error("رقم الهاتف غير صحيح. الرجاء إدخال رقم تونسي صالح.");
-      return;
-    }
     console.log("Form submitted:", formData);
   };
-
-  const isValidPhone = formData.phone === "" || isValidTunisiaPhone(formData.phone);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -48,7 +37,7 @@ export function ContactForm() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -57,19 +46,19 @@ export function ContactForm() {
           dir="rtl"
         >
           <h2 className="text-4xl md:text-5xl font-black text-slate-900 mb-3">
-            {support?.title ?? "التواصل معنا"}
+            التواصل معنا
           </h2>
           <p className="text-lg md:text-xl text-slate-600">
-            {support?.subtitle ?? "تواصل معنا لأي استفسارات أو أسئلة"}
+            تواصل معنا لأي استفسارات أو أسئلة
           </p>
         </motion.div>
-        
-        <motion.form 
+
+        <motion.form
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={scaleIn}
-          onSubmit={handleSubmit} 
+          onSubmit={handleSubmit}
           className="bg-white rounded-2xl p-6 md:p-8 border-2 border-slate-200 shadow-xl"
           dir="rtl"
         >
@@ -117,17 +106,10 @@ export function ContactForm() {
                 value={formData.phone}
                 onChange={handleChange}
                 required
-                className={`w-full px-4 py-3 rounded-xl border-2 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 transition-all ${
-                  !isValidPhone
-                    ? "border-red-500 focus:ring-red-500 focus:border-red-500"
-                    : "border-slate-200 focus:ring-teal-500 focus:border-teal-500"
-                }`}
+                className="w-full px-4 py-3 rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition-all"
                 placeholder="+216 XX XXX XXX"
                 dir="ltr"
               />
-              {!isValidPhone && (
-                <p className="text-xs text-red-500 mt-1">الرجاء إدخال رقم تونسي صالح (8 أرقام).</p>
-              )}
             </div>
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
@@ -202,7 +184,7 @@ export function ContactForm() {
               <option value="other">أخرى</option>
             </select>
           </div>
-          
+
           <div className="mb-4 md:mb-6">
             <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-2">
               <MessageSquare className="w-4 h-4 text-teal-600" />
@@ -219,8 +201,8 @@ export function ContactForm() {
               dir="rtl"
             />
           </div>
-          
-          <Button 
+
+          <Button
             type="submit"
             className="w-full bg-gradient-to-r from-teal-600 to-teal-700 text-white hover:from-teal-700 hover:to-teal-800 py-4 font-bold text-base rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
           >
@@ -232,4 +214,3 @@ export function ContactForm() {
     </section>
   );
 }
-

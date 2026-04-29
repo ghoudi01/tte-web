@@ -4,29 +4,29 @@ import { fadeInUp, fadeInLeft, fadeInRight } from "./animations";
 
 export function BeforeAfter() {
   const metrics = [
-    { 
-      label: "معدل RTO", 
-      before: 30, 
-      after: 18, 
-      improvement: 40, 
+    {
+      label: "معدل RTO",
+      before: 30,
+      after: 18,
+      improvement: 40,
       unit: "%",
-      direction: "down" 
+      direction: "down"
     },
-    { 
-      label: "خسائر شهرية", 
-      before: 15, 
-      after: 9, 
-      improvement: 40, 
+    {
+      label: "خسائر شهرية",
+      before: 15,
+      after: 9,
+      improvement: 40,
       unit: "%",
-      direction: "down" 
+      direction: "down"
     },
-    { 
-      label: "كفاءة الشحن", 
-      before: 70, 
-      after: 91, 
-      improvement: 30, 
+    {
+      label: "كفاءة الشحن",
+      before: 70,
+      after: 91,
+      improvement: 30,
       unit: "%",
-      direction: "up" 
+      direction: "up"
     }
   ];
 
@@ -39,7 +39,7 @@ export function BeforeAfter() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <motion.div 
+        <motion.div
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
@@ -80,9 +80,9 @@ export function BeforeAfter() {
                       <span className="text-sm font-medium text-slate-600">{metric.label}</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-2" dir="rtl">
-                      <div 
-                        className="bg-gradient-to-r from-slate-600 to-slate-700 h-2 rounded-full transition-all" 
-                        style={{ width: `${metric.before}%` }} 
+                      <div
+                        className="bg-gradient-to-r from-slate-600 to-slate-700 h-2 rounded-full transition-all"
+                        style={{ width: `${metric.before}%` }}
                       />
                     </div>
                     <div className="text-[9px] font-medium mt-0.5 opacity-0">
@@ -125,9 +125,9 @@ export function BeforeAfter() {
                       <span className="text-sm font-medium text-slate-600">{metric.label}</span>
                     </div>
                     <div className="w-full bg-slate-200 rounded-full h-2" dir="rtl">
-                      <div 
-                        className="bg-gradient-to-r from-teal-600 to-teal-700 h-2 rounded-full transition-all" 
-                        style={{ width: `${metric.after}%` }} 
+                      <div
+                        className="bg-gradient-to-r from-teal-600 to-teal-700 h-2 rounded-full transition-all"
+                        style={{ width: `${metric.after}%` }}
                       />
                     </div>
                     <div className={`text-[9px] font-medium mt-0.5 text-teal-600`}>
@@ -143,4 +143,3 @@ export function BeforeAfter() {
     </section>
   );
 }
-

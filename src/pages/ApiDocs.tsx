@@ -19,10 +19,6 @@ import {
   GitBranch,
   HelpCircle,
 } from "lucide-react";
-import {
-  EndpointDetails,
-  type ApiEndpoint,
-} from "./api-docs/components/EndpointDetails";
 
 const BASE_URL = "https://api.tte.tn/v1";
 
@@ -59,7 +55,18 @@ const SIDEBAR_SECTIONS = [
   { id: "changelog", label: "سجل التغييرات" },
 ];
 
-const ENDPOINTS: Record<string, ApiEndpoint> = {
+const ENDPOINTS: Record<
+  string,
+  {
+    method: string;
+    path: string;
+    title: string;
+    desc: string;
+    body?: string;
+    response?: string;
+    params?: { name: string; type: string; desc: string }[];
+  }
+> = {
   "verify-phone": {
     method: "POST",
     path: "/verify/phone",
@@ -334,18 +341,67 @@ export default function ApiDocs() {
             </section>
 
             {/* Endpoints */}
-            {(Object.keys(ENDPOINTS) as (keyof typeof ENDPOINTS)[]).map(
-              (key) => (
-                <EndpointDetails
-                  key={key}
-                  id={key}
-                  endpoint={ENDPOINTS[key]}
-                  baseUrl={BASE_URL}
-                  copied={copied}
-                  onCopy={copyToClipboard}
-                />
-              )
-            )}
+            {(Object.keys(ENDPOINTS) as (keyof typeof ENDPOINTS)[]).map((key) => {
+              const ep = ENDPOINTS[key];
+              return (
+                <section key={key} id={key} className="scroll-mt-24 mb-14">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span
+                      className={`px-2 py-1 rounded text-xs font-bold ${
+                        ep.method === "GET" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                      }`}
+                    >
+                      {ep.method}
+                    </span>
+                    <code className="text-slate-700 font-mono text-sm bg-slate-100 px-2 py-1 rounded">
+                      {BASE_URL}{ep.path}
+                    </code>
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-900 mb-2">{ep.title}</h2>
+                  <p className="text-slate-600 leading-relaxed mb-4">{ep.desc}</p>
+                  {ep.params && ep.params.length > 0 && (
+                    <div className="mb-4">
+                      <h3 className="text-sm font-semibold text-slate-800 mb-2">المعاملات</h3>
+                      <ul className="space-y-1 text-sm text-slate-600">
+                        {ep.params.map((p) => (
+                          <li key={p.name} className="flex gap-2">
+                            <code className="shrink-0 text-slate-800 font-mono">{p.name}</code>
+                            <span className="text-slate-500">({p.type})</span>
+                            <span>— {p.desc}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {ep.body && (
+                    <div className="mb-4">
+                      <h3 className="text-sm font-semibold text-slate-800 mb-2">جسم الطلب (Request Body)</h3>
+                      <div className="relative">
+                        <pre className="p-4 rounded-lg bg-slate-900 text-slate-300 text-sm overflow-x-auto font-mono">
+                          {ep.body}
+                        </pre>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 left-2 h-8 w-8 text-slate-400 hover:text-white"
+                          onClick={() => copyToClipboard(ep.body!, key)}
+                        >
+                          {copied === key ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                  {ep.response && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-800 mb-2">مثال الاستجابة (Response)</h3>
+                      <pre className="p-4 rounded-lg bg-slate-100 text-slate-700 text-sm overflow-x-auto font-mono border border-slate-200">
+                        {ep.response}
+                      </pre>
+                    </div>
+                  )}
+                </section>
+              );
+            })}
 
             {/* Schemas */}
             <section id="schemas" className="scroll-mt-24 mb-14">

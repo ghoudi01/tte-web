@@ -5,9 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useLocation } from "wouter";
-import { Mail, BookOpen } from "lucide-react";
+import { Mail, AlertTriangle, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 
@@ -19,11 +18,13 @@ const faqItems = [
 
 export default function Support() {
   const [location, setLocation] = useLocation();
-  const { data: appContent, isLoading } = trpc.automation.getAppContent.useQuery();
+  const { data: appContent } = trpc.automation.getAppContent.useQuery();
   const c = appContent?.support;
   const [contactForm, setContactForm] = useState({ name: "", email: "", message: "" });
+  const [reportForm, setReportForm] = useState({ subject: "", description: "" });
   const tabFromPath =
-    location === "/support/contact" ? "contact" : "help";
+    location === "/support/contact" ? "contact" :
+    location === "/support/report" ? "report" : "help";
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,18 +32,11 @@ export default function Support() {
     setContactForm({ name: "", email: "", message: "" });
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4" dir="rtl">
-        <div className="max-w-4xl mx-auto space-y-4">
-          <Skeleton className="h-10 w-40" />
-          <Skeleton className="h-5 w-64" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-72 w-full" />
-        </div>
-      </div>
-    );
-  }
+  const handleReportSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast.success("تم إرسال البلاغ. سنراجعه قريباً.");
+    setReportForm({ subject: "", description: "" });
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 py-8 px-4" dir="rtl">
@@ -56,9 +50,10 @@ export default function Support() {
           onValueChange={(v) => setLocation(v === "help" ? "/support" : `/support/${v}`)}
           dir="rtl"
         >
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="help">مركز المساعدة</TabsTrigger>
             <TabsTrigger value="contact">اتصل بنا</TabsTrigger>
+            <TabsTrigger value="report">الإبلاغ عن مشكلة</TabsTrigger>
           </TabsList>
           <TabsContent value="help" className="space-y-4">
             <Card>
@@ -122,6 +117,43 @@ export default function Support() {
                     />
                   </div>
                   <Button type="submit">إرسال</Button>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="report" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" />
+                  الإبلاغ عن مشكلة
+                </CardTitle>
+                <CardDescription>أبلغنا عن خطأ أو مشكلة تقنية</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleReportSubmit} className="space-y-4" dir="rtl">
+                  <div className="space-y-2">
+                    <Label htmlFor="reportSubject">الموضوع</Label>
+                    <Input
+                      id="reportSubject"
+                      value={reportForm.subject}
+                      onChange={(e) => setReportForm({ ...reportForm, subject: e.target.value })}
+                      placeholder="عنوان المشكلة"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reportDesc">الوصف</Label>
+                    <Textarea
+                      id="reportDesc"
+                      value={reportForm.description}
+                      onChange={(e) => setReportForm({ ...reportForm, description: e.target.value })}
+                      placeholder="وصف المشكلة بالتفصيل..."
+                      rows={4}
+                      required
+                    />
+                  </div>
+                  <Button type="submit">إرسال البلاغ</Button>
                 </form>
               </CardContent>
             </Card>

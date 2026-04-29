@@ -17,13 +17,13 @@ export function CTA() {
   return (
     <section id="cta" className="py-32 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
       <div className="absolute inset-0">
-        <img 
-          src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1920&q=80" 
+        <img
+          src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1920&q=80"
           alt="CTA Background"
           className="w-full h-full object-cover opacity-10"
         />
       </div>
-      
+
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
         <motion.div
           initial="hidden"
@@ -31,23 +31,23 @@ export function CTA() {
           viewport={{ once: true, margin: "-100px" }}
           variants={staggerContainer}
         >
-          <motion.h2 
+          <motion.h2
             variants={fadeInUp}
             className="text-5xl md:text-6xl font-black mb-6"
           >
             {title}
           </motion.h2>
-          <motion.p 
+          <motion.p
             variants={fadeInUp}
             className="text-xl text-slate-300 mb-12 max-w-2xl mx-auto"
           >
             {subtitle}
           </motion.p>
-          <motion.div 
+          <motion.div
             variants={fadeInUp}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Button 
+            <Button
               size="lg"
               onClick={() => document.getElementById(primaryTarget)?.scrollIntoView({ behavior: 'smooth' })}
               className="bg-teal-600 text-white hover:bg-teal-700 text-lg px-8 py-6 font-semibold shadow-lg"
@@ -55,7 +55,7 @@ export function CTA() {
               {primaryLabel}
               <ArrowRight className="w-5 h-5 mr-2" />
             </Button>
-            <Button 
+            <Button
               size="lg"
               variant="outline"
               onClick={() => document.getElementById(secondaryTarget)?.scrollIntoView({ behavior: 'smooth' })}
@@ -69,4 +69,3 @@ export function CTA() {
     </section>
   );
 }
-

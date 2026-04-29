@@ -1,15 +1,14 @@
 import { trpc } from "@/lib/trpc";
-import { AUTH_TOKEN_STORAGE_KEY, UNAUTHED_ERR_MSG } from "./const";
+import { UNAUTHED_ERR_MSG } from '@shared/const';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
+import superjson from "superjson";
 import App from "./App";
 import { getLoginUrl } from "./const";
 import "./index.css";
 
 const queryClient = new QueryClient();
-const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "https://tte-server.onrender.com";
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;
@@ -18,38 +17,8 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
   const isUnauthorized = error.message === UNAUTHED_ERR_MSG;
 
   if (!isUnauthorized) return;
-  const currentPath = window.location.pathname;
-  const publicPaths = new Set([
-    "/",
-    "/login",
-    "/register",
-    "/forgot-password",
-    "/terms",
-    "/privacy",
-    "/pricing",
-    "/plugins",
-    "/api-docs",
-  ]);
-  if (publicPaths.has(currentPath)) return;
-  if (currentPath.startsWith("/pricing/")) return;
-  if (currentPath.startsWith("/plugins/")) return;
 
-  const target = getLoginUrl();
-  try {
-    const targetUrl = new URL(target, window.location.origin);
-    const currentUrl = new URL(window.location.href);
-    const sameDestination =
-      targetUrl.origin === currentUrl.origin &&
-      targetUrl.pathname === currentUrl.pathname &&
-      targetUrl.search === currentUrl.search;
-
-    // Prevent hard-refresh redirect loops when already on target URL.
-    if (sameDestination) return;
-  } catch {
-    // If URL parsing fails, keep the original redirect behavior.
-  }
-
-  window.location.assign(target);
+  window.location.href = getLoginUrl();
 };
 
 queryClient.getQueryCache().subscribe(event => {
@@ -71,18 +40,11 @@ queryClient.getMutationCache().subscribe(event => {
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: new URL("/api/trpc", API_BASE_URL).toString(),
+      url: "/api/trpc",
+      transformer: superjson,
       fetch(input, init) {
-        const headers = new Headers(init?.headers ?? {});
-        if (typeof window !== "undefined") {
-          const token = window.localStorage.getItem(AUTH_TOKEN_STORAGE_KEY);
-          if (token && !headers.has("authorization")) {
-            headers.set("authorization", `Bearer ${token}`);
-          }
-        }
         return globalThis.fetch(input, {
           ...(init ?? {}),
-          headers,
           credentials: "include",
         });
       },
