@@ -1,176 +1,318 @@
-# Tunisia Trust Engine - Web Application
+# TTE Web Application
 
-A comprehensive React.js web application for the Tunisia Trust Engine platform, designed to help e-commerce merchants in Tunisia reduce RTO (Return to Origin) rates through AI-powered phone verification and trust scoring.
+React-based frontend for Tunisia Trust Engine. Provides merchant dashboard, order management, phone verification, plugin marketplace, and comprehensive documentation.
 
-## 🚀 Features Completed
+## Overview
 
-### Phase 1: Core Infrastructure & Authentication ✅
-- ✅ Database schema: merchants, phone_verifications, plugins, transactions
-- ✅ Merchant registration and profile management
-- ✅ Phone number verification system (OTP via SMS)
-- ✅ Authentication dashboard layout
-- ✅ Merchant login/signup pages
+The web application is the primary interface for merchants to interact with TTE. It features a modern React 19 stack with TypeScript, Vite, and a component library built on Radix UI and shadcn/ui.
 
-### Phase 2: Merchant Dashboard ✅
-- ✅ Dashboard home with key metrics (orders, RTO rate, revenue)
-- ✅ Orders management page (list, filter, status tracking)
-- ✅ Analytics and statistics page (charts, trends)
-- ✅ Settings page (profile, API keys, webhooks)
-- ✅ Merchant notifications system
+## Features
 
-### Phase 3: Phone Verification & Trust Score ✅
-- ✅ Phone verification API endpoint
-- ✅ Trust score calculation algorithm
-- ✅ Buyer history database
-- ✅ Real-time trust score display
-- ✅ Verification status indicators
+### Merchant Dashboard
+- **Metrics Overview** - Orders count, RTO rate, revenue, trust score trends
+- **Order Management** - List, filter, and update order verification status
+- **Analytics** - Charts and statistics for order patterns and fraud detection
+- **Settings** - Profile management, API key regeneration, webhook configuration
 
-### Phase 4: Plugin System & Marketplace ✅
-- ✅ Plugin marketplace page
-- ✅ Plugin installation/management UI
-- ✅ Plugin configuration page
-- ✅ API documentation for plugin developers
+### Phone Verification
+- **Real-time Verification** - Check customer phone trust scores before shipping
+- **Verification History** - Track past verification attempts and outcomes
+- **Spam Reporting** - Report fraudulent or spam phone numbers
 
-### Phase 5: Documentation Section ✅
-- ✅ Documentation landing page
-- ✅ Getting started guide
-- ✅ API reference documentation
-- ✅ Integration guides (Shopify, WooCommerce)
-- ✅ FAQ section
+### Plugin Marketplace
+- **Discover Plugins** - Browse available platform integrations
+- **Install & Configure** - One-click installation with API key setup
+- **Manage Active Plugins** - Enable/disable and configure plugin settings
 
-## 🛠️ Technology Stack
+### Documentation Hub
+- **API Reference** - Interactive API documentation
+- **Integration Guides** - Step-by-step setup for Shopify, WooCommerce, etc.
+- **FAQ** - Common questions and answers
 
-- **Frontend**: React.js 19, TypeScript, Tailwind CSS
-- **Backend**: NestJS, tRPC, plugin REST API
-- **Database**: Prisma with SQLite for local development
-- **UI Components**: Radix UI, shadcn/ui
-- **Charts**: Recharts
-- **Routing**: Wouter
-- **State Management**: TanStack Query (React Query)
+## Tech Stack
 
-## 📦 Installation
+- **React 19** - Latest React with concurrent features
+- **TypeScript** - Type-safe development
+- **Vite** - Lightning-fast build tool and dev server
+- **Tailwind CSS** - Utility-first CSS framework
+- **shadcn/ui** - Re-usable UI components built on Radix UI
+- **Wouter** - Lightweight client-side router
+- **TanStack Query** - Server state management and caching
+- **tRPC** - Type-safe API client
+- **Recharts** - Charting library for analytics
+- **React Hook Form** - Form state management
+- **Zod** - Schema validation
 
-1. Install dependencies:
+## Project Structure
+
+```
+web/
+├── src/
+│   ├── components/           # Reusable UI components
+│   │   ├── ui/              # Base UI components (buttons, cards, etc.)
+│   │   ├── layout/          # Layout components (header, sidebar, etc.)
+│   │   └── features/        # Feature-specific components
+│   ├── pages/               # Page components (route handlers)
+│   │   ├── dashboard/       # Dashboard pages
+│   │   ├── orders/          # Order management pages
+│   │   ├── phone-verification/
+│   │   ├── plugins/         # Plugin marketplace
+│   │   ├── settings/        # Account settings
+│   │   └── api-docs/        # API documentation
+│   ├── lib/                 # Utilities and configurations
+│   │   ├── trpc/            # tRPC client setup
+│   │   ├── api/             # API utilities
+│   │   ├── utils/           # Helper functions
+│   │   └── constants/       # App constants
+│   ├── contexts/            # React contexts
+│   ├── hooks/               # Custom React hooks
+│   └── _core/               # Core application logic
+├── public/                  # Static assets
+├── patches/                 # pnpm patch files
+├── vite.config.ts           # Vite configuration
+├── tsconfig.json            # TypeScript configuration
+├── tailwind.config.js       # Tailwind CSS configuration
+├── postcss.config.js        # PostCSS configuration
+└── package.json            # Dependencies and scripts
+```
+
+## Getting Started
+
+### Prerequisites
+- Node.js 18 or higher
+- pnpm package manager
+
+### Installation
+
 ```bash
+cd web
 pnpm install
 ```
 
-2. Set up environment variables:
-```bash
-cp .env.example .env
-```
+### Development Server
 
-Required environment variables are managed by the backend in `server/.env`.
-The frontend expects the API to be available through the Vite dev proxy or
-the configured deployment origin.
-
-3. Start the backend from `server/`:
-```bash
-pnpm dev
-```
-
-4. Start development server:
 ```bash
 pnpm dev
 ```
 
 The application will be available at `http://localhost:5173`
 
-## 📁 Project Structure
+The Vite dev server proxies API requests to the backend at `http://localhost:4000` (configured in `vite.config.ts`).
 
-```
-web/
-├── src/
-│   ├── components/      # React components
-│   ├── pages/           # Page components
-│   ├── lib/             # Utilities and tRPC client
-│   └── contexts/        # React contexts
-├── patches/             # pnpm patches
-└── vite.config.ts       # Vite and dev proxy configuration
-```
-
-## 🔌 API Endpoints (tRPC)
-
-All API endpoints are available through tRPC:
-
-### Merchants
-- `merchants.getProfile` - Get merchant profile
-- `merchants.create` - Create merchant account
-- `merchants.update` - Update merchant profile
-- `merchants.regenerateApiKey` - Regenerate API key
-- `merchants.getDashboard` - Get dashboard data
-
-### Phone Verification
-- `phoneVerification.check` - Check phone number and get trust score
-- `phoneVerification.reportVerdict` - Submit spam/not-spam feedback
-
-### Orders
-- `orders.list` - List orders with filters
-- `orders.updateStatus` - Update order status
-- `orders.addFeedback` - Add order feedback
-- `orders.feedbackByOrder` - List feedback for an order
-
-### Reports
-- `reports.create` - Submit a merchant report
-- `reports.list` - List merchant reports
-- `reports.get` - Get one report
-- `reports.update` - Update a report
-
-Plugin integrations use backend REST endpoints such as
-`POST /api/plugin/orders` with an `X-API-Key` header.
-
-## 🎨 Pages
-
-- **Home** (`/`) - Landing page with features and pricing
-- **Merchant Setup** (`/merchant-setup`) - Create merchant account
-- **Dashboard** (`/dashboard`) - Main dashboard with metrics and analytics
-- **Orders** (`/orders`) - Orders management with filtering
-- **Phone Verification** (`/phone-verification`) - Verify phone numbers
-- **Plugins** (`/plugins`) - Plugin marketplace
-- **Settings** (`/settings`) - Account settings and API keys
-- **API Docs** (`/api-docs`) - API documentation and guides
-
-## 🔐 Authentication
-
-The application uses the backend auth tRPC router and stores a JWT for API
-calls. Protected dashboard routes are wrapped by `DashboardLayout`.
-
-## 📊 Database Schema
-
-### Tables
-- `users` - User accounts
-- `merchants` - Merchant profiles
-- `spamPhones` - Spam/not-spam reports for phone numbers
-- `orders` - Order records
-- `orderFeedbacks` - Feedback linked to orders
-- `reports` - Merchant-submitted reports
-
-## 🚀 Building for Production
+### Build for Production
 
 ```bash
 pnpm build
+```
+
+Output goes to `web/dist/` directory.
+
+### Preview Production Build
+
+```bash
 pnpm preview
 ```
 
-## 📝 Development
+## Available Scripts
 
-- Run type checking: `pnpm check`
-- Format code: `pnpm format`
-- Run tests: `pnpm test`
+```bash
+# Development
+pnpm dev              # Start Vite dev server with HMR
+pnpm build            # Build for production
+pnpm preview          # Preview production build locally
 
-## 🎯 Next Steps
+# Code Quality
+pnpm check            # TypeScript type checking
+pnpm lint             # ESLint (if configured)
+pnpm format           # Format code with Prettier
 
-While the core functionality is complete, you may want to:
+# Testing
+pnpm test             # Run test suite
+pnpm test:coverage    # Run tests with coverage
 
-1. Integrate actual SMS/IVR services for phone verification
-2. Add payment processing for subscriptions
-3. Implement admin panel for system management
-4. Add more analytics and reporting features
-5. Create actual Shopify/WooCommerce plugins
-6. Add email notifications
-7. Implement webhook system for order updates
+# Utilities
+pnpm analyze          # Analyze bundle size
+```
 
-## 📄 License
+## Pages & Routes
+
+| Route | Component | Description |
+|-------|-----------|-------------|
+| `/` | LandingPage | Public landing page with features and pricing |
+| `/merchant-setup` | MerchantSetup | Register new merchant account |
+| `/login` | Login | Merchant sign-in page |
+| `/dashboard` | Dashboard | Main dashboard with metrics and analytics |
+| `/dashboard/orders` | OrdersPage | Order management and verification |
+| `/dashboard/phone-verification` | PhoneVerification | Phone trust score checking |
+| `/dashboard/plugins` | PluginsPage | Plugin marketplace |
+| `/dashboard/settings` | SettingsPage | Account and API settings |
+| `/dashboard/api-docs` | ApiDocsPage | API documentation |
+| `/docs` | DocsLanding | Documentation hub |
+
+## State Management
+
+### Server State (TanStack Query)
+All server data (merchants, orders, phone verifications) is managed through TanStack Query with tRPC as the data source.
+
+```typescript
+import { api } from '@/lib/trpc';
+
+// Example: Fetch merchant profile
+const { data: merchant } = api.merchants.getProfile.useQuery();
+```
+
+### Client State (React Context)
+Global UI state (theme, modals, notifications) uses React Context.
+
+## API Integration
+
+### tRPC Client
+
+The tRPC client is configured in `src/lib/trpc/`:
+
+```typescript
+import { api } from '@/lib/trpc';
+
+// Call a tRPC procedure
+const result = await api.phoneVerification.check.mutate({
+  phoneNumber: '+21698123456'
+});
+```
+
+### API Base URL
+
+- **Development:** Proxied through Vite dev server to `http://localhost:4000`
+- **Production:** Determined by `VITE_API_URL` environment variable or relative path
+
+## UI Components
+
+### shadcn/ui Components
+
+We use shadcn/ui for consistent design. Components are located in `src/components/ui/`:
+
+- Button
+- Card
+- Input
+- Select
+- Dialog/Modal
+- Toast/Notifications
+- Table
+- Chart (via Recharts)
+
+### Custom Components
+
+Feature-specific components live in `src/components/features/`:
+
+- `OrderTable` - Orders listing with filters
+- `TrustScoreBadge` - Visual trust score indicator
+- `PhoneVerificationForm` - Phone check form
+- `PluginCard` - Plugin showcase card
+
+## Styling
+
+### Tailwind CSS
+
+All styles use Tailwind utility classes.
+
+```tsx
+// Example
+<button className="bg-primary text-primary-foreground px-4 py-2 rounded-md">
+  Click me
+</button>
+```
+
+### Custom CSS Variables
+
+Theme colors defined in `src/index.css`:
+
+```css
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --primary: 221.2 83.2% 53.3%;
+  --primary-foreground: 210 40% 98%;
+  /* ... */
+}
+```
+
+### Dark Mode
+
+The app supports dark mode through CSS variables and class-based toggling.
+
+## Forms
+
+Forms use React Hook Form with Zod validation:
+
+```typescript
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+
+const schema = z.object({
+  phoneNumber: z.string().min(8),
+});
+
+const { register, handleSubmit } = useForm({
+  resolver: zodResolver(schema)
+});
+```
+
+## Error Handling
+
+### API Errors
+tRPC errors are caught by the `TRPCReactError` type and displayed via toast notifications.
+
+### Form Errors
+Form validation errors display inline with the input field.
+
+### Global Error Boundary
+React Error Boundary catches unexpected errors and displays a fallback UI.
+
+## Testing
+
+```bash
+# Run test suite
+pnpm test
+
+# Run with coverage
+pnpm test:coverage
+
+# Run in watch mode
+pnpm test:watch
+```
+
+Tests are written with Vitest and React Testing Library.
+
+## Performance
+
+### Code Splitting
+Routes are automatically code-split by Vite and Wouter.
+
+### Image Optimization
+Static assets in `public/` are served as-is. For optimization, use WebP format and appropriate sizing.
+
+### Bundle Analysis
+
+```bash
+pnpm analyze
+```
+
+## Browser Support
+
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+
+## Contributing
+
+1. Follow existing code style and conventions
+2. Use TypeScript strict mode
+3. Write tests for new features
+4. Update documentation as needed
+
+See `docs/DEVELOPER_ONBOARDING.md` for full guidelines.
+
+## License
 
 MIT
-
