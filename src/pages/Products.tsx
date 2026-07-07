@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, Package, Plus, Pencil, Search, MessageCircle, Download, Link, X, Trash2, GripVertical, Bot, BarChart3, Settings2, Save, Users } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, Package, Plus, Pencil, Search, MessageCircle, Download, Link, X, Trash2, GripVertical, Bot, BarChart3, Settings2, Save, Users, ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -50,6 +50,62 @@ const emptyForm: ProductForm = {
   fbIgQuestions: [],
 };
 
+const FAKE_CONVERSIONS = [
+  {
+    id: "conv-1",
+    customerName: "أحمد بن علي",
+    phoneNumber: "+216 98 123 456",
+    createdAt: "2026-07-06T14:30:00Z",
+    status: "confirmed",
+    trustScore: 88,
+    lastMessage: "قداش سوم الصباط وهل فما توصيل لسوسة؟",
+    messages: [
+      { role: "customer", text: "مرحبا، حبيت نسأل على الصباط هذا", time: "14:20" },
+      { role: "bot", text: "👋 أهلاً بك! الصباط متوفر وبجودة عالية. كيف يمكنني مساعدتك؟", time: "14:20" },
+      { role: "customer", text: "قداش السوم وهل فما توصيل لسوسة؟", time: "14:21" },
+      { role: "bot", text: "💰 سعر المنتج هو 79 د.ت.\n🚚 نعم، متوفر التوصيل لكامل تراب الجمهورية بما في ذلك سوسة بـ 7 د.ت فقط!", time: "14:21" },
+      { role: "customer", text: "باهي نحب نشري واحد قياس 42 لون أسود", time: "14:22" },
+      { role: "bot", text: "🛍️ رائع! لإتمام الطلب، يرجى تزويدي برقم هاتفك والاسم الكامل.", time: "14:22" },
+      { role: "customer", text: "98123456 أحمد بن علي", time: "14:23" },
+      { role: "bot", text: "✅ تم تسجيل طلبك بنجاح! رقم الهاتف: +216 98 123 456. سيتم الاتصال بك لتأكيد الشحن.", time: "14:24" },
+    ]
+  },
+  {
+    id: "conv-2",
+    customerName: "مريم العياري",
+    phoneNumber: "+216 55 456 789",
+    createdAt: "2026-07-05T09:15:00Z",
+    status: "delivered",
+    trustScore: 95,
+    lastMessage: "تم الاستلام، شكرا جزيلا جودة ممتازة!",
+    messages: [
+      { role: "customer", text: "مرحبا، فما مقاس 38 من هذا؟", time: "09:02" },
+      { role: "bot", text: "👋 أهلاً بك! نعم متوفر مقاس 38 باللون الوردي والأبيض.", time: "09:03" },
+      { role: "customer", text: "باهي قداش السوم؟", time: "09:03" },
+      { role: "bot", text: "💰 السعر هو 79 د.ت.", time: "09:04" },
+      { role: "customer", text: "أوكي نحب نطلب واحد أبيض مقاس 38", time: "09:05" },
+      { role: "bot", text: "🛍️ ممتاز! يرجى إرسال رقم الهاتف والمدينة لتسجيل الطلب.", time: "09:05" },
+      { role: "customer", text: "هاتفي 55456789 تونس العاصمة", time: "09:06" },
+      { role: "bot", text: "✅ تم استلام طلبك! سيتم التواصل معك قريباً لتأكيد التوصيل.", time: "09:07" },
+    ]
+  },
+  {
+    id: "conv-3",
+    customerName: "ياسين الغربي",
+    phoneNumber: "+216 22 789 123",
+    createdAt: "2026-07-04T18:22:00Z",
+    status: "cancelled",
+    trustScore: 32,
+    lastMessage: "سومو غالي برشا شكرا",
+    messages: [
+      { role: "customer", text: "السلام عليكم، قداش السوم؟", time: "18:19" },
+      { role: "bot", text: "💰 السعر هو 79 د.ت. متوفر التوصيل لكافة الولايات.", time: "18:20" },
+      { role: "customer", text: "سومو غالي برشا شكرا", time: "18:21" },
+      { role: "bot", text: "نشكرك على تواصلك معنا، في خدمتكم دائماً!", time: "18:22" },
+    ]
+  }
+];
+
 export default function Products() {
   const { t, dir } = useLanguage();
   const utils = trpc.useUtils();
@@ -66,6 +122,7 @@ export default function Products() {
 
   const [activeBotProduct, setActiveBotProduct] = useState<Product | null>(null);
   const [botInstructions, setBotInstructions] = useState("");
+  const [selectedFakeConv, setSelectedFakeConv] = useState<any | null>(null);
 
   const ordersQuery = trpc.orders.list.useQuery({});
 
@@ -556,169 +613,276 @@ export default function Products() {
           {/* Backdrop */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
-            onClick={() => setActiveBotProduct(null)}
+            onClick={() => {
+              setActiveBotProduct(null);
+              setSelectedFakeConv(null);
+            }}
           />
 
-          {/* Drawer Body */}
-          <div className="relative w-full max-w-md bg-background shadow-2xl h-full flex flex-col border-s border-border animate-in slide-in-from-right duration-250">
-            <div className="p-6 border-b border-border flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Bot className="w-5 h-5 text-accent animate-bounce" style={{ animationDuration: "3s" }} />
+          {/* Drawer Body - 70% to 75% of screen width */}
+          <div className="relative w-full lg:w-[75%] max-w-6xl bg-background shadow-2xl h-full flex flex-col border-s border-border animate-in slide-in-from-right duration-250">
+            {/* Header */}
+            <div className="p-5 border-b border-border flex items-center justify-between bg-muted/10">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-accent/10 rounded-xl">
+                  <Bot className="w-5 h-5 text-accent animate-bounce" style={{ animationDuration: "3s" }} />
+                </div>
                 <div>
-                  <h3 className="font-bold text-foreground">إعدادات مساعد المنتجات الذكي</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">{activeBotProduct.name}</p>
+                  <h3 className="font-bold text-base text-foreground">مساعد المنتجات الذكي & التحليلات</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{activeBotProduct.name} — {activeBotProduct.price.toFixed(2)} د.ت</p>
                 </div>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => setActiveBotProduct(null)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setActiveBotProduct(null);
+                  setSelectedFakeConv(null);
+                }}
+              >
                 إغلاق
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Product Conversion Analytics */}
-              <div className="space-y-3">
-                <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-emerald-500" />
-                  مؤشرات التحويل للمنتج (Product Conversion)
-                </h4>
-                <div className="grid grid-cols-3 gap-3 bg-muted/30 p-4 rounded-xl border border-border/50">
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">معدل التحويل</p>
-                    <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                      {Math.round(((activeBotProduct.name.length * 3) % 15) + 12)}%
-                    </p>
+            {/* Split Screen Grid */}
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden h-full">
+              {/* Left Column: Settings (col-span-5) */}
+              <div className="lg:col-span-5 flex flex-col p-6 space-y-6 overflow-y-auto border-e border-border/60 h-full bg-muted/5">
+                {/* Product Conversion Analytics */}
+                <div className="space-y-3">
+                  <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-emerald-500" />
+                    مؤشرات التحويل للمنتج (Product Conversion)
+                  </h4>
+                  <div className="grid grid-cols-3 gap-3 bg-muted/30 p-4 rounded-xl border border-border/50">
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground">معدل التحويل</p>
+                      <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                        {Math.round(((activeBotProduct.name.length * 3) % 15) + 12)}%
+                      </p>
+                    </div>
+                    <div className="text-center border-x border-border/50">
+                      <p className="text-xs text-muted-foreground">المحادثات</p>
+                      <p className="text-xl font-bold text-foreground mt-1">
+                        {Math.round(((activeBotProduct.name.length * 7) % 40) + 15)}
+                      </p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground">الطلبات</p>
+                      <p className="text-xl font-bold text-foreground mt-1">
+                        {Math.floor(Math.round(((activeBotProduct.name.length * 7) % 40) + 15) * 0.15) + 1}
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-center border-x border-border/50">
-                    <p className="text-xs text-muted-foreground">المحادثات</p>
-                    <p className="text-xl font-bold text-foreground mt-1">
-                      {Math.round(((activeBotProduct.name.length * 7) % 40) + 15)}
-                    </p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs text-muted-foreground">الطلبات</p>
-                    <p className="text-xl font-bold text-foreground mt-1">
-                      {Math.floor(Math.round(((activeBotProduct.name.length * 7) % 40) + 15) * 0.15) + 1}
-                    </p>
+                  <div className="w-full bg-muted rounded-full h-2">
+                    <div
+                      className="bg-emerald-500 h-2 rounded-full"
+                      style={{ width: `${Math.round(((activeBotProduct.name.length * 3) % 15) + 12)}%` }}
+                    />
                   </div>
                 </div>
-                <div className="w-full bg-muted rounded-full h-2">
-                  <div
-                    className="bg-emerald-500 h-2 rounded-full"
-                    style={{ width: `${Math.round(((activeBotProduct.name.length * 3) % 15) + 12)}%` }}
-                  />
-                </div>
-              </div>
 
-              <div className="border-t border-border/50 my-6" />
+                <div className="border-t border-border/50 my-6" />
 
-              {/* Product Conversions List */}
-              <div className="space-y-3">
-                <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                  <Users className="w-4 h-4 text-accent" />
-                  المشترون المحوّلون للمنتج ({((ordersQuery.data ?? []) as any[]).filter((o: any) => o.productId === activeBotProduct.id).length})
-                </h4>
-                {((ordersQuery.data ?? []) as any[]).filter((o: any) => o.productId === activeBotProduct.id).length === 0 ? (
-                  <p className="text-xs text-muted-foreground text-center py-6 bg-muted/20 rounded-xl border border-dashed border-border">
-                    لا توجد طلبات محولة لهذا المنتج بعد عبر البوت.
-                  </p>
-                ) : (
-                  <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
-                    {((ordersQuery.data ?? []) as any[])
-                      .filter((o: any) => o.productId === activeBotProduct.id)
-                      .map((conv: any) => (
-                        <div key={conv.id} className="p-3 rounded-lg border bg-card text-xs flex items-center justify-between gap-2 shadow-xs hover:border-accent/40 transition-colors">
-                          <div>
-                            <p className="font-bold text-foreground">{conv.customerName}</p>
-                            <p className="text-muted-foreground mt-0.5" dir="ltr">{conv.phoneNumber}</p>
-                            <p className="text-[10px] text-muted-foreground mt-1">
-                              📅 {new Date(conv.createdAt).toLocaleDateString("ar-TN")}
-                            </p>
-                          </div>
-                          <div className="text-end">
-                            <span className={cn(
-                              "inline-block px-2 py-0.5 rounded-full text-[10px] font-medium border mb-1",
-                              conv.status === "confirmed" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200" :
-                              conv.status === "delivered" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200" :
-                              conv.status === "cancelled" ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-200" :
-                              "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200"
-                            )}>
-                              {conv.status}
-                            </span>
-                            <p className="text-[10px] text-muted-foreground">الثقة: {conv.trustScore}%</p>
-                          </div>
-                        </div>
-                      ))}
+                {/* Bot Settings */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                    <Settings2 className="w-4 h-4 text-accent" />
+                    إعدادات الرد والتفعيل
+                  </h4>
+
+                  {/* Toggle Bot Catalog */}
+                  <div className="flex items-center justify-between p-3 rounded-lg border bg-card shadow-xs">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">تفعيل المنتج في كتالوج البوت</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">عند التفعيل، يستطيع المشترون تصفح وشراء المنتج آلياً عبر البوت.</p>
+                    </div>
+                    <Switch
+                      checked={activeBotProduct.fbIgEnabled}
+                      onCheckedChange={(checked) => {
+                        updateMutation.mutate({
+                          id: activeBotProduct.id,
+                          fbIgEnabled: checked,
+                        }, {
+                          onSuccess: (res: any) => {
+                            toast.success(checked ? "تم تفعيل المنتج في البوت" : "تم إلغاء تفعيل المنتج في البوت");
+                            setActiveBotProduct(res as any);
+                          }
+                        });
+                      }}
+                    />
                   </div>
-                )}
-              </div>
 
-              {/* Bot Settings */}
-              <div className="space-y-4">
-                <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                  <Settings2 className="w-4 h-4 text-accent" />
-                  إعدادات الرد والتفعيل
-                </h4>
-
-                {/* Toggle Bot Catalog */}
-                <div className="flex items-center justify-between p-3 rounded-lg border bg-card shadow-xs">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">تفعيل المنتج في كتالوج البوت</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">عند التفعيل، يستطيع المشترون تصفح وشراء المنتج آلياً عبر ماسنجر وإنستغرام.</p>
+                  {/* Custom prompt guidelines */}
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-foreground">تعليمات وتوجيهات الذكاء الاصطناعي للمنتج</Label>
+                    <Textarea
+                      value={botInstructions}
+                      onChange={(e) => setBotInstructions(e.target.value)}
+                      placeholder="مثال: هذا الحذاء متوفر فقط باللون الأسود والبني، المقاسات من 40 إلى 44. التوصيل مجاني لثلاثة أزواج أو أكثر."
+                      className="min-h-[120px] text-sm leading-relaxed"
+                    />
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      💡 اكتب تفاصيل مخصصة (الألوان المتوفرة، المقاسات، الميزات...) ليقوم مساعد الذكاء الاصطناعي بالاعتماد عليها عند إجابة المشتري عن تفاصيل هذا المنتج.
+                    </p>
                   </div>
-                  <Switch
-                    checked={activeBotProduct.fbIgEnabled}
-                    onCheckedChange={(checked) => {
+
+                  <Button
+                    type="button"
+                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground gap-1.5 h-10 font-bold mt-4"
+                    onClick={() => {
+                      const opts = { ...(activeBotProduct.fbIgOptions as any || {}), customPrompt: botInstructions };
                       updateMutation.mutate({
                         id: activeBotProduct.id,
-                        fbIgEnabled: checked,
+                        fbIgOptions: opts,
                       }, {
                         onSuccess: (res: any) => {
-                          toast.success(checked ? "تم تفعيل المنتج في البوت" : "تم إلغاء تفعيل المنتج في البوت");
+                          toast.success("تم حفظ إرشادات البوت بنجاح");
                           setActiveBotProduct(res as any);
                         }
                       });
                     }}
-                  />
-                </div>
-
-                {/* Custom prompt guidelines */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-medium text-foreground">تعليمات وتوجيهات الذكاء الاصطناعي للمنتج</Label>
-                  <Textarea
-                    value={botInstructions}
-                    onChange={(e) => setBotInstructions(e.target.value)}
-                    placeholder="مثال: هذا الحذاء متوفر فقط باللون الأسود والبني، المقاسات من 40 إلى 44. التوصيل مجاني لثلاثة أزواج أو أكثر."
-                    className="min-h-[100px] text-sm"
-                  />
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    💡 اكتب تفاصيل مخصصة (الألوان المتوفرة، المقاسات، الميزات...) ليقوم مساعد الذكاء الاصطناعي بالاعتماد عليها عند إجابة المشتري عن تفاصيل هذا المنتج.
-                  </p>
+                    disabled={updateMutation.isPending}
+                  >
+                    {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    حفظ إعدادات البوت
+                  </Button>
                 </div>
               </div>
-            </div>
 
-            {/* Footer actions */}
-            <div className="p-6 border-t border-border bg-muted/10 flex items-center gap-3">
-              <Button
-                type="button"
-                className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground gap-1.5 h-10 font-bold"
-                onClick={() => {
-                  const opts = { ...(activeBotProduct.fbIgOptions as any || {}), customPrompt: botInstructions };
-                  updateMutation.mutate({
-                    id: activeBotProduct.id,
-                    fbIgOptions: opts,
-                  }, {
-                    onSuccess: (res: any) => {
-                      toast.success("تم حفظ إرشادات البوت بنجاح");
-                      setActiveBotProduct(res as any);
-                    }
-                  });
-                }}
-                disabled={updateMutation.isPending}
-              >
-                {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                حفظ التغييرات
-              </Button>
+              {/* Right Column: Conversions List & Chat Window (col-span-7) */}
+              <div className="lg:col-span-7 flex flex-col h-full overflow-hidden bg-card">
+                {!selectedFakeConv ? (
+                  /* Case A: Show Conversions / Customer List */
+                  <div className="flex-1 flex flex-col overflow-hidden">
+                    <div className="p-4 border-b border-border/50 bg-muted/5 flex items-center justify-between">
+                      <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                        <Users className="w-4 h-4 text-accent" />
+                        قائمة المشترين الذين تم تحويلهم ({FAKE_CONVERSIONS.length})
+                      </h4>
+                      <Badge variant="outline" className="text-[10px] bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600">بيانات توضيحية (Mock UI)</Badge>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                      {FAKE_CONVERSIONS.map((conv) => (
+                        <div
+                          key={conv.id}
+                          className="p-4 rounded-xl border border-border/80 bg-background shadow-xs hover:border-accent/40 hover:shadow-md transition-all cursor-pointer group"
+                          onClick={() => setSelectedFakeConv(conv)}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-1">
+                              <p className="font-bold text-foreground group-hover:text-accent transition-colors">{conv.customerName}</p>
+                              <p className="text-xs text-muted-foreground font-mono" dir="ltr">{conv.phoneNumber}</p>
+                            </div>
+                            <div className="text-end space-y-1.5">
+                              <span className={cn(
+                                "inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border",
+                                conv.status === "confirmed" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200" :
+                                conv.status === "delivered" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200" :
+                                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200"
+                              )}>
+                                {conv.status === "confirmed" ? "مؤكد" : conv.status === "delivered" ? "تم التوصيل" : "ملغي"}
+                              </span>
+                              <div className="flex items-center justify-end gap-1.5">
+                                <span className="text-[10px] text-muted-foreground">الثقة:</span>
+                                <span className={cn(
+                                  "text-[11px] font-bold",
+                                  conv.trustScore >= 70 ? "text-green-600" : conv.trustScore >= 40 ? "text-amber-500" : "text-red-500"
+                                )}>
+                                  {conv.trustScore}%
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Last message quote */}
+                          <div className="mt-3 pt-3 border-t border-dashed border-border flex items-center justify-between text-xs">
+                            <p className="text-muted-foreground truncate italic flex-1 max-w-[280px]">
+                              💬 "{conv.lastMessage}"
+                            </p>
+                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                              {new Date(conv.createdAt).toLocaleDateString("ar-TN")}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  /* Case B: Show Live Bot Conversation Logs */
+                  <div className="flex-1 flex flex-col overflow-hidden h-full">
+                    {/* Customer Chat Header */}
+                    <div className="p-4 border-b border-border/50 bg-muted/15 flex items-center justify-between">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setSelectedFakeConv(null)}
+                        className="gap-1 text-xs"
+                      >
+                        {dir === "rtl" ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+                        رجوع للعملاء
+                      </Button>
+                      <div className="text-center">
+                        <p className="font-bold text-sm text-foreground">{selectedFakeConv.customerName}</p>
+                        <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{selectedFakeConv.phoneNumber}</p>
+                      </div>
+                      <div className="text-end">
+                        <span className={cn(
+                          "inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border",
+                          selectedFakeConv.status === "confirmed" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200" :
+                          selectedFakeConv.status === "delivered" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200" :
+                          "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200"
+                        )}>
+                          {selectedFakeConv.status === "confirmed" ? "مؤكد" : selectedFakeConv.status === "delivered" ? "تم التوصيل" : "ملغي"}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Chat Bubble History Container */}
+                    <div className="flex-1 overflow-y-auto p-4 bg-muted/5 space-y-4">
+                      {selectedFakeConv.messages.map((m: any, i: number) => {
+                        const isBot = m.role === "bot";
+                        return (
+                          <div
+                            key={i}
+                            className={cn(
+                              "flex w-full",
+                              isBot ? "justify-start" : "justify-end"
+                            )}
+                          >
+                            <div className="max-w-[85%] space-y-1">
+                              <div
+                                className={cn(
+                                  "p-3 rounded-2xl text-xs whitespace-pre-line shadow-xs leading-relaxed",
+                                  isBot
+                                    ? "bg-accent/15 text-foreground rounded-tl-none border border-accent/10"
+                                    : "bg-primary text-primary-foreground rounded-tr-none"
+                                )}
+                              >
+                                {m.text}
+                              </div>
+                              <p className={cn("text-[9px] text-muted-foreground px-1", isBot ? "text-start" : "text-end")}>
+                                {m.time}
+                              </p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Dummy Chat Input to round up UI */}
+                    <div className="p-3 border-t bg-muted/5 flex items-center gap-2">
+                      <Input
+                        disabled
+                        placeholder="البوت يتحكم في المحادثة حالياً..."
+                        className="text-xs bg-muted/50 cursor-not-allowed"
+                      />
+                      <Button size="sm" disabled className="text-xs h-9 cursor-not-allowed">إرسال</Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
