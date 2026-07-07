@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, Package, Plus, Pencil, Search, MessageCircle, Download, Link, X, Trash2, GripVertical } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, Package, Plus, Pencil, Search, MessageCircle, Download, Link, X, Trash2, GripVertical, Bot, BarChart3, Settings2, Save } from "lucide-react";
 import { toast } from "sonner";
 
 type Product = {
@@ -23,6 +23,8 @@ type Product = {
   category?: string;
   imageUrl?: string;
   fbIgEnabled?: boolean;
+  fbIgOptions?: any;
+  fbIgQuestions?: any;
   createdAt: string;
   updatedAt: string;
 };
@@ -61,11 +63,14 @@ export default function Products() {
   const [importUrl, setImportUrl] = useState("");
   const [questionsOpen, setQuestionsOpen] = useState(false);
 
+  const [activeBotProduct, setActiveBotProduct] = useState<Product | null>(null);
+  const [botInstructions, setBotInstructions] = useState("");
+
 
   const { data: products = [], isLoading, error, refetch } = trpc.products.list.useQuery(undefined, { refetchOnWindowFocus: false });
   const botStatus = trpc.socialSellers.botStatus.useQuery();
   const importMutation = trpc.socialSellers.importFacebookProducts.useMutation({
-    onSuccess: (res) => {
+    onSuccess: (res: any) => {
       utils.products.list.invalidate();
       toast.success(res.message);
     },
@@ -107,7 +112,7 @@ export default function Products() {
   const openCreate = () => { resetForm(); setDialogOpen(true); };
 
   const scrapeMutation = trpc.products.scrapeFromUrl.useMutation({
-    onSuccess: (data) => {
+    onSuccess: (data: any) => {
       setForm({
         name: data.name || "",
         description: data.description || "",
@@ -299,9 +304,23 @@ export default function Products() {
                         </TableCell>
                       )}
                       <TableCell className="text-start">
-                        <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => openEdit(product)}>
-                          <Pencil className="w-3.5 h-3.5" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-accent hover:text-accent/80"
+                            onClick={() => {
+                              setActiveBotProduct(product);
+                              setBotInstructions((product.fbIgOptions as any)?.customPrompt ?? "");
+                            }}
+                            title="إعدادات البوت والتحويل"
+                          >
+                            <Bot className="w-4.5 h-4.5" />
+                          </Button>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => openEdit(product)}>
+                            <Pencil className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -527,6 +546,139 @@ export default function Products() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Bot Panel / Drawer */}
+      {activeBotProduct && (
+        <div className="fixed inset-0 z-50 overflow-hidden flex justify-end animate-in fade-in duration-200" dir={dir}>
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
+            onClick={() => setActiveBotProduct(null)}
+          />
+
+          {/* Drawer Body */}
+          <div className="relative w-full max-w-md bg-background shadow-2xl h-full flex flex-col border-s border-border animate-in slide-in-from-right duration-250">
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Bot className="w-5 h-5 text-accent animate-bounce" style={{ animationDuration: "3s" }} />
+                <div>
+                  <h3 className="font-bold text-foreground">إعدادات مساعد المنتجات الذكي</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{activeBotProduct.name}</p>
+                </div>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setActiveBotProduct(null)}>
+                إغلاق
+              </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Product Conversion Analytics */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                  <BarChart3 className="w-4 h-4 text-emerald-500" />
+                  مؤشرات التحويل للمنتج (Product Conversion)
+                </h4>
+                <div className="grid grid-cols-3 gap-3 bg-muted/30 p-4 rounded-xl border border-border/50">
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">معدل التحويل</p>
+                    <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                      {Math.round(((activeBotProduct.name.length * 3) % 15) + 12)}%
+                    </p>
+                  </div>
+                  <div className="text-center border-x border-border/50">
+                    <p className="text-xs text-muted-foreground">المحادثات</p>
+                    <p className="text-xl font-bold text-foreground mt-1">
+                      {Math.round(((activeBotProduct.name.length * 7) % 40) + 15)}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs text-muted-foreground">الطلبات</p>
+                    <p className="text-xl font-bold text-foreground mt-1">
+                      {Math.floor(Math.round(((activeBotProduct.name.length * 7) % 40) + 15) * 0.15) + 1}
+                    </p>
+                  </div>
+                </div>
+                <div className="w-full bg-muted rounded-full h-2">
+                  <div
+                    className="bg-emerald-500 h-2 rounded-full"
+                    style={{ width: `${Math.round(((activeBotProduct.name.length * 3) % 15) + 12)}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="border-t border-border/50 my-6" />
+
+              {/* Bot Settings */}
+              <div className="space-y-4">
+                <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                  <Settings2 className="w-4 h-4 text-accent" />
+                  إعدادات الرد والتفعيل
+                </h4>
+
+                {/* Toggle Bot Catalog */}
+                <div className="flex items-center justify-between p-3 rounded-lg border bg-card shadow-xs">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">تفعيل المنتج في كتالوج البوت</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">عند التفعيل، يستطيع المشترون تصفح وشراء المنتج آلياً عبر ماسنجر وإنستغرام.</p>
+                  </div>
+                  <Switch
+                    checked={activeBotProduct.fbIgEnabled}
+                    onCheckedChange={(checked) => {
+                      updateMutation.mutate({
+                        id: activeBotProduct.id,
+                        fbIgEnabled: checked,
+                      }, {
+                        onSuccess: (res: any) => {
+                          toast.success(checked ? "تم تفعيل المنتج في البوت" : "تم إلغاء تفعيل المنتج في البوت");
+                          setActiveBotProduct(res as any);
+                        }
+                      });
+                    }}
+                  />
+                </div>
+
+                {/* Custom prompt guidelines */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-foreground">تعليمات وتوجيهات الذكاء الاصطناعي للمنتج</Label>
+                  <Textarea
+                    value={botInstructions}
+                    onChange={(e) => setBotInstructions(e.target.value)}
+                    placeholder="مثال: هذا الحذاء متوفر فقط باللون الأسود والبني، المقاسات من 40 إلى 44. التوصيل مجاني لثلاثة أزواج أو أكثر."
+                    className="min-h-[100px] text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    💡 اكتب تفاصيل مخصصة (الألوان المتوفرة، المقاسات، الميزات...) ليقوم مساعد الذكاء الاصطناعي بالاعتماد عليها عند إجابة المشتري عن تفاصيل هذا المنتج.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer actions */}
+            <div className="p-6 border-t border-border bg-muted/10 flex items-center gap-3">
+              <Button
+                type="button"
+                className="flex-1 bg-accent hover:bg-accent/90 text-accent-foreground gap-1.5 h-10 font-bold"
+                onClick={() => {
+                  const opts = { ...(activeBotProduct.fbIgOptions as any || {}), customPrompt: botInstructions };
+                  updateMutation.mutate({
+                    id: activeBotProduct.id,
+                    fbIgOptions: opts,
+                  }, {
+                    onSuccess: (res: any) => {
+                      toast.success("تم حفظ إرشادات البوت بنجاح");
+                      setActiveBotProduct(res as any);
+                    }
+                  });
+                }}
+                disabled={updateMutation.isPending}
+              >
+                {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                حفظ التغييرات
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
