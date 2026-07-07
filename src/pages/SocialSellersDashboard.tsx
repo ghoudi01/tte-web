@@ -114,14 +114,11 @@ export default function SocialSellersDashboard({ embedded = false }: { embedded?
   if (embedded) {
     return (
       <div className="space-y-4">
-        {!metaCrypto.data?.configured && (
-          <p className="text-sm leading-relaxed rounded-lg px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 text-amber-800 dark:text-amber-300">
-            {t("socialSellers.securityWarning")}
-          </p>
+        {!hasConnection && (
+          <Button asChild disabled={!metaCrypto.data?.configured}>
+            <a href={connectHref}>{t("socialSellers.connectButton")}</a>
+          </Button>
         )}
-        <Button asChild disabled={!metaCrypto.data?.configured}>
-          <a href={connectHref}>{t("socialSellers.connectButton")}</a>
-        </Button>
         <ul className="text-sm text-muted-foreground space-y-2">
           {(connections.data ?? []).map((c: { id: string; facebookPageId: string; instagramBusinessAccountId?: string }) => (
             <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 border bg-card rounded-lg px-3 py-2">
@@ -254,15 +251,12 @@ export default function SocialSellersDashboard({ embedded = false }: { embedded?
               <CardDescription>{t("socialSellers.connectDesc")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {!metaCrypto.data?.configured && (
-                <p className="text-sm leading-relaxed rounded-lg px-3 py-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-800/50 text-amber-800 dark:text-amber-300">
-                  {t("socialSellers.securityWarning")}
-                </p>
-              )}
               <div className="flex flex-wrap gap-3">
-                <Button asChild disabled={!metaCrypto.data?.configured}>
-                  <a href={connectHref}>{t("socialSellers.connectButton")}</a>
-                </Button>
+                {!hasConnection && (
+                  <Button asChild disabled={!metaCrypto.data?.configured}>
+                    <a href={connectHref}>{t("socialSellers.connectButton")}</a>
+                  </Button>
+                )}
                 {hasConnection && (
                   <Button
                     variant="outline"
