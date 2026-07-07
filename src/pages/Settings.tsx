@@ -112,9 +112,13 @@ export default function Settings() {
     { id: "automation", label: t("settings.automation"), icon: Settings2 },
     { id: "api", label: t("settings.api"), icon: Key },
     { id: "social", label: t("settings.social"), icon: Facebook },
+
     { id: "credits", label: t("settings.credits"), icon: Coins },
     { id: "security", label: t("settings.security"), icon: Shield },
   ];
+
+  const activeTabSet = useMemo(() => new Set(tabConfig.map(t => t.id)), []);
+  const safeTab = activeTabSet.has(activeTab) ? activeTab : "profile";
 
   return (
     <div className="space-y-6" dir={dir}>
@@ -123,7 +127,7 @@ export default function Settings() {
         <p className="text-muted-foreground text-sm mt-1">{t("settings.subtitle")}</p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={v => setLocation(v === "profile" ? "/settings" : `/settings?tab=${v}`)} className="space-y-4" dir={dir}>
+      <Tabs value={safeTab} onValueChange={v => setLocation(v === "profile" ? "/settings" : `/settings?tab=${v}`)} className="space-y-4" dir={dir}>
         <div className="overflow-x-auto pb-1">
           <TabsList className="inline-flex" dir={dir}>
             {tabConfig.map(tab => (
@@ -250,6 +254,7 @@ export default function Settings() {
             </CardContent>
           </Card>
         </TabsContent>
+
 
         <TabsContent value="credits">
           <Card className="shadow-sm border-0 dark:bg-card">
