@@ -622,19 +622,32 @@ export default function Products() {
           {/* Drawer Body - 70% to 75% of screen width */}
           <div className="relative w-full lg:w-[75%] max-w-6xl bg-background shadow-2xl h-full flex flex-col border-s border-border animate-in slide-in-from-right duration-250">
             {/* Header */}
-            <div className="p-5 border-b border-border flex items-center justify-between bg-muted/10">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-accent/10 rounded-xl">
+            <div className="p-5 border-b border-border flex items-center justify-between bg-muted/10 relative">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-accent/10 rounded-xl relative">
                   <Bot className="w-5 h-5 text-accent animate-bounce" style={{ animationDuration: "3s" }} />
+                  {activeBotProduct.fbIgEnabled && (
+                    <span className="absolute top-1 right-1 flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                  )}
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-foreground">مساعد المنتجات الذكي & التحليلات</h3>
+                  <h3 className="font-bold text-base text-foreground flex items-center gap-2">
+                    إعدادات مساعد المنتجات الذكي
+                    <span className={cn(
+                      "inline-flex h-2 w-2 rounded-full",
+                      activeBotProduct.fbIgEnabled ? "bg-emerald-500 shadow-lg shadow-emerald-500/50 animate-pulse" : "bg-muted-foreground/40"
+                    )} />
+                  </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">{activeBotProduct.name} — {activeBotProduct.price.toFixed(2)} د.ت</p>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="sm"
+                className="hover:bg-muted"
                 onClick={() => {
                   setActiveBotProduct(null);
                   setSelectedFakeConv(null);
@@ -649,36 +662,50 @@ export default function Products() {
               {/* Left Column: Settings (col-span-5) */}
               <div className="lg:col-span-5 flex flex-col p-6 space-y-6 overflow-y-auto border-e border-border/60 h-full bg-muted/5">
                 {/* Product Conversion Analytics */}
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-emerald-500" />
+                    <BarChart3 className="w-4 h-4 text-emerald-500 animate-pulse" />
                     مؤشرات التحويل للمنتج (Product Conversion)
                   </h4>
-                  <div className="grid grid-cols-3 gap-3 bg-muted/30 p-4 rounded-xl border border-border/50">
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground">معدل التحويل</p>
-                      <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">
-                        {Math.round(((activeBotProduct.name.length * 3) % 15) + 12)}%
-                      </p>
+                  <div className="flex items-center gap-5 bg-muted/30 p-5 rounded-2xl border border-border/50 relative overflow-hidden group">
+                    {/* Glowing circular gauge on the left */}
+                    <div className="relative flex items-center justify-center w-20 h-20 shrink-0">
+                      <svg className="w-20 h-20 transform -rotate-90">
+                        <circle cx="40" cy="40" r="34" className="text-muted-foreground/10" strokeWidth="6" stroke="currentColor" fill="transparent" />
+                        <circle
+                          cx="40"
+                          cy="40"
+                          r="34"
+                          className="text-emerald-500 transition-all duration-500 ease-out"
+                          strokeWidth="6"
+                          strokeDasharray={2 * Math.PI * 34}
+                          strokeDashoffset={2 * Math.PI * 34 * (1 - Math.round(((activeBotProduct.name.length * 3) % 15) + 12) / 100)}
+                          strokeLinecap="round"
+                          stroke="currentColor"
+                          fill="transparent"
+                        />
+                      </svg>
+                      <div className="absolute flex flex-col items-center justify-center">
+                        <span className="text-base font-black text-foreground">
+                          {Math.round(((activeBotProduct.name.length * 3) % 15) + 12)}%
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-center border-x border-border/50">
-                      <p className="text-xs text-muted-foreground">المحادثات</p>
-                      <p className="text-xl font-bold text-foreground mt-1">
-                        {Math.round(((activeBotProduct.name.length * 7) % 40) + 15)}
-                      </p>
+
+                    <div className="flex-1 grid grid-cols-2 gap-x-2 gap-y-3">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">المحادثات</p>
+                        <p className="text-base font-bold text-foreground mt-0.5">
+                          {Math.round(((activeBotProduct.name.length * 7) % 40) + 15)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground">الطلبات المؤكدة</p>
+                        <p className="text-base font-bold text-foreground mt-0.5">
+                          {Math.floor(Math.round(((activeBotProduct.name.length * 7) % 40) + 15) * 0.15) + 1}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground">الطلبات</p>
-                      <p className="text-xl font-bold text-foreground mt-1">
-                        {Math.floor(Math.round(((activeBotProduct.name.length * 7) % 40) + 15) * 0.15) + 1}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="w-full bg-muted rounded-full h-2">
-                    <div
-                      className="bg-emerald-500 h-2 rounded-full"
-                      style={{ width: `${Math.round(((activeBotProduct.name.length * 3) % 15) + 12)}%` }}
-                    />
                   </div>
                 </div>
 
@@ -767,17 +794,24 @@ export default function Products() {
                       {FAKE_CONVERSIONS.map((conv) => (
                         <div
                           key={conv.id}
-                          className="p-4 rounded-xl border border-border/80 bg-background shadow-xs hover:border-accent/40 hover:shadow-md transition-all cursor-pointer group"
+                          className="p-4 rounded-xl border border-border/80 bg-background shadow-xs hover:border-accent/50 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer group relative overflow-hidden"
                           onClick={() => setSelectedFakeConv(conv)}
                         >
+                          <div className="absolute top-0 start-0 h-full w-1 bg-transparent group-hover:bg-accent transition-colors" />
                           <div className="flex items-start justify-between gap-3">
                             <div className="space-y-1">
-                              <p className="font-bold text-foreground group-hover:text-accent transition-colors">{conv.customerName}</p>
+                              <p className="font-bold text-foreground group-hover:text-accent transition-colors flex items-center gap-2">
+                                {conv.customerName}
+                                <span className={cn(
+                                  "h-1.5 w-1.5 rounded-full",
+                                  conv.status === "cancelled" ? "bg-red-400" : "bg-emerald-400 animate-pulse"
+                                )} />
+                              </p>
                               <p className="text-xs text-muted-foreground font-mono" dir="ltr">{conv.phoneNumber}</p>
                             </div>
                             <div className="text-end space-y-1.5">
                               <span className={cn(
-                                "inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border",
+                                "inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold border shadow-xs",
                                 conv.status === "confirmed" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200" :
                                 conv.status === "delivered" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200" :
                                 "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200"
@@ -787,7 +821,7 @@ export default function Products() {
                               <div className="flex items-center justify-end gap-1.5">
                                 <span className="text-[10px] text-muted-foreground">الثقة:</span>
                                 <span className={cn(
-                                  "text-[11px] font-bold",
+                                  "text-[11px] font-black",
                                   conv.trustScore >= 70 ? "text-green-600" : conv.trustScore >= 40 ? "text-amber-500" : "text-red-500"
                                 )}>
                                   {conv.trustScore}%
@@ -798,7 +832,7 @@ export default function Products() {
 
                           {/* Last message quote */}
                           <div className="mt-3 pt-3 border-t border-dashed border-border flex items-center justify-between text-xs">
-                            <p className="text-muted-foreground truncate italic flex-1 max-w-[280px]">
+                            <p className="text-muted-foreground truncate italic flex-1 max-w-[280px] group-hover:text-foreground transition-colors">
                               💬 "{conv.lastMessage}"
                             </p>
                             <span className="text-[10px] text-muted-foreground whitespace-nowrap">
@@ -840,24 +874,35 @@ export default function Products() {
                     </div>
 
                     {/* Chat Bubble History Container */}
-                    <div className="flex-1 overflow-y-auto p-4 bg-muted/5 space-y-4">
+                    <div className="flex-1 overflow-y-auto p-5 bg-muted/10 space-y-4">
                       {selectedFakeConv.messages.map((m: any, i: number) => {
                         const isBot = m.role === "bot";
                         return (
                           <div
                             key={i}
                             className={cn(
-                              "flex w-full",
-                              isBot ? "justify-start" : "justify-end"
+                              "flex w-full items-start gap-2.5",
+                              isBot ? "justify-start" : "justify-end flex-row-reverse"
                             )}
                           >
-                            <div className="max-w-[85%] space-y-1">
+                            {/* Avatar */}
+                            {isBot ? (
+                              <div className="w-8 h-8 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center text-accent shrink-0 shadow-xs">
+                                <Bot className="w-4 h-4 animate-pulse" />
+                              </div>
+                            ) : (
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/80 to-primary flex items-center justify-center text-primary-foreground font-black text-xs shrink-0 shadow-xs">
+                                {selectedFakeConv.customerName.slice(0, 2)}
+                              </div>
+                            )}
+
+                            <div className="max-w-[80%] space-y-1">
                               <div
                                 className={cn(
-                                  "p-3 rounded-2xl text-xs whitespace-pre-line shadow-xs leading-relaxed",
+                                  "p-3 rounded-2xl text-xs whitespace-pre-line shadow-xs leading-relaxed transition-all",
                                   isBot
-                                    ? "bg-accent/15 text-foreground rounded-tl-none border border-accent/10"
-                                    : "bg-primary text-primary-foreground rounded-tr-none"
+                                    ? "bg-background text-foreground rounded-tl-none border border-border"
+                                    : "bg-primary text-primary-foreground rounded-tr-none hover:bg-primary/95"
                                 )}
                               >
                                 {m.text}
@@ -872,13 +917,20 @@ export default function Products() {
                     </div>
 
                     {/* Dummy Chat Input to round up UI */}
-                    <div className="p-3 border-t bg-muted/5 flex items-center gap-2">
-                      <Input
-                        disabled
-                        placeholder="البوت يتحكم في المحادثة حالياً..."
-                        className="text-xs bg-muted/50 cursor-not-allowed"
-                      />
-                      <Button size="sm" disabled className="text-xs h-9 cursor-not-allowed">إرسال</Button>
+                    <div className="p-4 border-t bg-background flex items-center gap-3 relative">
+                      <div className="absolute top-0 inset-x-0 h-[1px] bg-gradient-to-r from-transparent via-border to-transparent" />
+                      <div className="relative flex-1">
+                        <Input
+                          disabled
+                          placeholder="مساعد يقين الذكي يتحكم في المحادثة..."
+                          className="text-xs bg-muted/30 cursor-not-allowed ps-8 h-10 border-border/80"
+                        />
+                        <span className="absolute start-3 top-1/2 -translate-y-1/2 flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                      </div>
+                      <Button size="sm" disabled className="text-xs h-10 cursor-not-allowed px-4 bg-muted hover:bg-muted text-muted-foreground border border-border">إرسال</Button>
                     </div>
                   </div>
                 )}
