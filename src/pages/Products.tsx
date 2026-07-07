@@ -123,6 +123,7 @@ export default function Products() {
   const [activeBotProduct, setActiveBotProduct] = useState<Product | null>(null);
   const [botInstructions, setBotInstructions] = useState("");
   const [selectedFakeConv, setSelectedFakeConv] = useState<any | null>(null);
+  const [activeLeftTab, setActiveLeftTab] = useState<"analytics" | "settings">("analytics");
 
   const ordersQuery = trpc.orders.list.useQuery({});
 
@@ -659,121 +660,158 @@ export default function Products() {
 
             {/* Split Screen Grid */}
             <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-hidden h-full">
-              {/* Left Column: Settings (col-span-5) */}
-              <div className="lg:col-span-5 flex flex-col p-6 space-y-6 overflow-y-auto border-e border-border/60 h-full bg-muted/5">
-                {/* Product Conversion Analytics */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-emerald-500 animate-pulse" />
-                    مؤشرات التحويل للمنتج (Product Conversion)
-                  </h4>
-                  <div className="flex items-center gap-5 bg-muted/30 p-5 rounded-2xl border border-border/50 relative overflow-hidden group">
-                    {/* Glowing circular gauge on the left */}
-                    <div className="relative flex items-center justify-center w-20 h-20 shrink-0">
-                      <svg className="w-20 h-20 transform -rotate-90">
-                        <circle cx="40" cy="40" r="34" className="text-muted-foreground/10" strokeWidth="6" stroke="currentColor" fill="transparent" />
-                        <circle
-                          cx="40"
-                          cy="40"
-                          r="34"
-                          className="text-emerald-500 transition-all duration-500 ease-out"
-                          strokeWidth="6"
-                          strokeDasharray={2 * Math.PI * 34}
-                          strokeDashoffset={2 * Math.PI * 34 * (1 - Math.round(((activeBotProduct.name.length * 3) % 15) + 12) / 100)}
-                          strokeLinecap="round"
-                          stroke="currentColor"
-                          fill="transparent"
-                        />
-                      </svg>
-                      <div className="absolute flex flex-col items-center justify-center">
-                        <span className="text-base font-black text-foreground">
-                          {Math.round(((activeBotProduct.name.length * 3) % 15) + 12)}%
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="flex-1 grid grid-cols-2 gap-x-2 gap-y-3">
-                      <div>
-                        <p className="text-[10px] text-muted-foreground">المحادثات</p>
-                        <p className="text-base font-bold text-foreground mt-0.5">
-                          {Math.round(((activeBotProduct.name.length * 7) % 40) + 15)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] text-muted-foreground">الطلبات المؤكدة</p>
-                        <p className="text-base font-bold text-foreground mt-0.5">
-                          {Math.floor(Math.round(((activeBotProduct.name.length * 7) % 40) + 15) * 0.15) + 1}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              {/* Left Column: Settings & Analytics Tabs (col-span-5) */}
+              <div className="lg:col-span-5 flex flex-col overflow-hidden border-e border-border/60 h-full bg-muted/5">
+                {/* Tab Switcher */}
+                <div className="flex border-b border-border bg-muted/20 p-2 gap-1 shrink-0" dir={dir}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveLeftTab("analytics")}
+                    className={cn(
+                      "flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2",
+                      activeLeftTab === "analytics"
+                        ? "bg-background text-foreground shadow-sm border border-border"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <BarChart3 className="w-4 h-4 text-emerald-500" />
+                    مؤشرات التحويل
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveLeftTab("settings")}
+                    className={cn(
+                      "flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-2",
+                      activeLeftTab === "settings"
+                        ? "bg-background text-foreground shadow-sm border border-border"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    <Settings2 className="w-4 h-4 text-accent" />
+                    إعدادات البوت
+                  </button>
                 </div>
 
-                <div className="border-t border-border/50 my-6" />
+                {/* Left Panel Body - Scrollable */}
+                <div className="flex-1 overflow-y-auto p-5">
+                  {activeLeftTab === "analytics" && (
+                    <div className="space-y-5 animate-in fade-in duration-200">
+                      {/* Product Conversion Analytics */}
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-5 bg-muted/40 p-5 rounded-2xl border border-border/50 relative overflow-hidden group">
+                          {/* Glowing circular gauge on the left */}
+                          <div className="relative flex items-center justify-center w-20 h-20 shrink-0">
+                            <svg className="w-20 h-20 transform -rotate-90">
+                              <circle cx="40" cy="40" r="34" className="text-muted-foreground/10" strokeWidth="6" stroke="currentColor" fill="transparent" />
+                              <circle
+                                cx="40"
+                                cy="40"
+                                r="34"
+                                className="text-emerald-500 transition-all duration-500 ease-out"
+                                strokeWidth="6"
+                                strokeDasharray={2 * Math.PI * 34}
+                                strokeDashoffset={2 * Math.PI * 34 * (1 - Math.round(((activeBotProduct.name.length * 3) % 15) + 12) / 100)}
+                                strokeLinecap="round"
+                                stroke="currentColor"
+                                fill="transparent"
+                              />
+                            </svg>
+                            <div className="absolute flex flex-col items-center justify-center">
+                              <span className="text-base font-black text-foreground">
+                                {Math.round(((activeBotProduct.name.length * 3) % 15) + 12)}%
+                              </span>
+                            </div>
+                          </div>
 
-                {/* Bot Settings */}
-                <div className="space-y-4">
-                  <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
-                    <Settings2 className="w-4 h-4 text-accent" />
-                    إعدادات الرد والتفعيل
-                  </h4>
+                          <div className="flex-1 grid grid-cols-2 gap-x-2 gap-y-3">
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">المحادثات</p>
+                              <p className="text-base font-bold text-foreground mt-0.5">
+                                {Math.round(((activeBotProduct.name.length * 7) % 40) + 15)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-muted-foreground">الطلبات المؤكدة</p>
+                              <p className="text-base font-bold text-foreground mt-0.5">
+                                {Math.floor(Math.round(((activeBotProduct.name.length * 7) % 40) + 15) * 0.15) + 1}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
 
-                  {/* Toggle Bot Catalog */}
-                  <div className="flex items-center justify-between p-3 rounded-lg border bg-card shadow-xs">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">تفعيل المنتج في كتالوج البوت</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">عند التفعيل، يستطيع المشترون تصفح وشراء المنتج آلياً عبر البوت.</p>
+                      {/* Info Tips for Product Conversion */}
+                      <div className="p-4 rounded-xl border border-border bg-card text-xs text-muted-foreground space-y-2 leading-relaxed">
+                        <p className="font-bold text-foreground">💡 كيفية تحسين نسبة التحويل للمنتج:</p>
+                        <ul className="list-disc list-inside space-y-1 pr-1">
+                          <li>اكتب تفاصيل دقيقة في خانة تعليمات البوت.</li>
+                          <li>تأكد من أن السعر منافس ومناسب للسوق التونسية.</li>
+                          <li>تواصل مع العملاء الذين لم يتمموا الطلب بشكل فوري يدوياً.</li>
+                        </ul>
+                      </div>
                     </div>
-                    <Switch
-                      checked={activeBotProduct.fbIgEnabled}
-                      onCheckedChange={(checked) => {
-                        updateMutation.mutate({
-                          id: activeBotProduct.id,
-                          fbIgEnabled: checked,
-                        }, {
-                          onSuccess: (res: any) => {
-                            toast.success(checked ? "تم تفعيل المنتج في البوت" : "تم إلغاء تفعيل المنتج في البوت");
-                            setActiveBotProduct(res as any);
-                          }
-                        });
-                      }}
-                    />
-                  </div>
+                  )}
 
-                  {/* Custom prompt guidelines */}
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-foreground">تعليمات وتوجيهات الذكاء الاصطناعي للمنتج</Label>
-                    <Textarea
-                      value={botInstructions}
-                      onChange={(e) => setBotInstructions(e.target.value)}
-                      placeholder="مثال: هذا الحذاء متوفر فقط باللون الأسود والبني، المقاسات من 40 إلى 44. التوصيل مجاني لثلاثة أزواج أو أكثر."
-                      className="min-h-[120px] text-sm leading-relaxed"
-                    />
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      💡 اكتب تفاصيل مخصصة (الألوان المتوفرة، المقاسات، الميزات...) ليقوم مساعد الذكاء الاصطناعي بالاعتماد عليها عند إجابة المشتري عن تفاصيل هذا المنتج.
-                    </p>
-                  </div>
+                  {activeLeftTab === "settings" && (
+                    <div className="space-y-4 animate-in fade-in duration-200">
+                      {/* Toggle Bot Catalog */}
+                      <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-card shadow-xs">
+                        <div>
+                          <p className="text-sm font-bold text-foreground">تفعيل المنتج في البوت</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 max-w-[200px] leading-relaxed font-normal">تصفح وشراء المنتج آلياً عبر محادثات مسنجر وإنستغرام.</p>
+                        </div>
+                        <Switch
+                          checked={activeBotProduct.fbIgEnabled}
+                          onCheckedChange={(checked) => {
+                            updateMutation.mutate({
+                              id: activeBotProduct.id,
+                              fbIgEnabled: checked,
+                            }, {
+                              onSuccess: (res: any) => {
+                                toast.success(checked ? "تم تفعيل المنتج في البوت" : "تم إلغاء تفعيل المنتج في البوت");
+                                setActiveBotProduct(res as any);
+                              }
+                            });
+                          }}
+                        />
+                      </div>
 
-                  <Button
-                    type="button"
-                    className="w-full bg-accent hover:bg-accent/90 text-accent-foreground gap-1.5 h-10 font-bold mt-4"
-                    onClick={() => {
-                      const opts = { ...(activeBotProduct.fbIgOptions as any || {}), customPrompt: botInstructions };
-                      updateMutation.mutate({
-                        id: activeBotProduct.id,
-                        fbIgOptions: opts,
-                      }, {
-                        onSuccess: (res: any) => {
-                          toast.success("تم حفظ إرشادات البوت بنجاح");
-                          setActiveBotProduct(res as any);
-                        }
-                      });
-                    }}
-                    disabled={updateMutation.isPending}
-                  >
-                    {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    حفظ إعدادات البوت
-                  </Button>
+                      {/* Custom prompt guidelines */}
+                      <div className="space-y-2 bg-card p-4 rounded-xl border border-border shadow-xs">
+                        <Label className="text-sm font-bold text-foreground">تعليمات وتوجيهات الذكاء الاصطناعي للمنتج</Label>
+                        <Textarea
+                          value={botInstructions}
+                          onChange={(e) => setBotInstructions(e.target.value)}
+                          placeholder="مثال: هذا الحذاء متوفر فقط باللون الأسود والبني، المقاسات من 40 إلى 44. التوصيل مجاني لثلاثة أزواج أو أكثر."
+                          className="min-h-[140px] text-xs leading-relaxed"
+                        />
+                        <p className="text-[10px] text-muted-foreground leading-relaxed mt-1">
+                          💡 اكتب تفاصيل مخصصة (الألوان، المقاسات، الميزات...) ليقوم الذكاء الاصطناعي بالاعتماد عليها عند إجابة المشتري تلقائياً.
+                        </p>
+                      </div>
+
+                      <Button
+                        type="button"
+                        className="w-full bg-accent hover:bg-accent/90 text-accent-foreground gap-1.5 h-10 font-bold mt-4 shadow-sm"
+                        onClick={() => {
+                          const opts = { ...(activeBotProduct.fbIgOptions as any || {}), customPrompt: botInstructions };
+                          updateMutation.mutate({
+                            id: activeBotProduct.id,
+                            fbIgOptions: opts,
+                          }, {
+                            onSuccess: (res: any) => {
+                              toast.success("تم حفظ إرشادات البوت بنجاح");
+                              setActiveBotProduct(res as any);
+                            }
+                          });
+                        }}
+                        disabled={updateMutation.isPending}
+                      >
+                        {updateMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        حفظ إعدادات البوت
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
 
