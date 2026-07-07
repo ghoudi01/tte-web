@@ -11,8 +11,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, Package, Plus, Pencil, Search, MessageCircle, Download, Link, X, Trash2, GripVertical, Bot, BarChart3, Settings2, Save } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, Package, Plus, Pencil, Search, MessageCircle, Download, Link, X, Trash2, GripVertical, Bot, BarChart3, Settings2, Save, Users } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type Product = {
   id: string;
@@ -65,6 +66,8 @@ export default function Products() {
 
   const [activeBotProduct, setActiveBotProduct] = useState<Product | null>(null);
   const [botInstructions, setBotInstructions] = useState("");
+
+  const ordersQuery = trpc.orders.list.useQuery({});
 
 
   const { data: products = [], isLoading, error, refetch } = trpc.products.list.useQuery(undefined, { refetchOnWindowFocus: false });
@@ -607,6 +610,47 @@ export default function Products() {
               </div>
 
               <div className="border-t border-border/50 my-6" />
+
+              {/* Product Conversions List */}
+              <div className="space-y-3">
+                <h4 className="font-semibold text-sm text-foreground flex items-center gap-2">
+                  <Users className="w-4 h-4 text-accent" />
+                  المشترون المحوّلون للمنتج ({((ordersQuery.data ?? []) as any[]).filter((o: any) => o.productId === activeBotProduct.id).length})
+                </h4>
+                {((ordersQuery.data ?? []) as any[]).filter((o: any) => o.productId === activeBotProduct.id).length === 0 ? (
+                  <p className="text-xs text-muted-foreground text-center py-6 bg-muted/20 rounded-xl border border-dashed border-border">
+                    لا توجد طلبات محولة لهذا المنتج بعد عبر البوت.
+                  </p>
+                ) : (
+                  <div className="space-y-2 max-h-[180px] overflow-y-auto pr-1">
+                    {((ordersQuery.data ?? []) as any[])
+                      .filter((o: any) => o.productId === activeBotProduct.id)
+                      .map((conv: any) => (
+                        <div key={conv.id} className="p-3 rounded-lg border bg-card text-xs flex items-center justify-between gap-2 shadow-xs hover:border-accent/40 transition-colors">
+                          <div>
+                            <p className="font-bold text-foreground">{conv.customerName}</p>
+                            <p className="text-muted-foreground mt-0.5" dir="ltr">{conv.phoneNumber}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              📅 {new Date(conv.createdAt).toLocaleDateString("ar-TN")}
+                            </p>
+                          </div>
+                          <div className="text-end">
+                            <span className={cn(
+                              "inline-block px-2 py-0.5 rounded-full text-[10px] font-medium border mb-1",
+                              conv.status === "confirmed" ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200" :
+                              conv.status === "delivered" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200" :
+                              conv.status === "cancelled" ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-200" :
+                              "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200"
+                            )}>
+                              {conv.status}
+                            </span>
+                            <p className="text-[10px] text-muted-foreground">الثقة: {conv.trustScore}%</p>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
 
               {/* Bot Settings */}
               <div className="space-y-4">
