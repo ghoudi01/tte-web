@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
-import { AlertTriangle, Loader2, Package, Plus, Search, CheckCircle2, ChevronLeft, ChevronRight, FileText, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
+import { AlertTriangle, Loader2, Package, Plus, Search, CheckCircle2, ChevronLeft, ChevronRight, FileText, ChevronDown, ChevronUp, Sparkles, Check, X } from "lucide-react";
 import { toast } from "sonner";
 
 const TUNISIAN_GOVERNORATES = [
@@ -34,6 +34,9 @@ type Order = {
   verificationStatus: string;
   createdAt: string;
   metadata?: Record<string, unknown>;
+  trustScore?: number;
+  riskLevel?: string;
+  decisionAction?: string;
 };
 
 type NewOrderForm = {
@@ -80,6 +83,19 @@ const ORDER_TABS = [
   { value: "returned", labelKey: "orders.returned" },
   { value: "cancelled", labelKey: "orders.cancelled" },
 ] as const;
+
+function StatusBadge({ status }: { status?: string }) {
+  const { t } = useLanguage();
+  const cfg: Record<string, { label: string; class: string }> = {
+    pending: { label: t("orders.pending"), class: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200" },
+    delivered: { label: t("orders.delivered"), class: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200" },
+    returned: { label: t("orders.returned"), class: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200" },
+    cancelled: { label: t("orders.cancelled"), class: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-200" },
+    confirmed: { label: t("orders.confirmed"), class: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200" },
+  };
+  const c = cfg[status ?? ""] ?? { label: status ?? "-", class: "bg-slate-100 dark:bg-slate-800" };
+  return <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border", c.class)}>{c.label}</span>;
+}
 
 function LoadingSkeleton() {
   return (
@@ -162,14 +178,14 @@ export default function Orders() {
     onError: (err: Error) => toast.error(err.message),
   });
 
+  const orders = (ordersQuery.data ?? []) as Order[];
+
+  const filteredOrders = useMemo(() => orders, [orders]);
+
   if (ordersQuery.error?.message?.includes("Merchant not found")) {
     setLocation("/merchant-setup");
     return null;
   }
-
-  const orders = (ordersQuery.data ?? []) as Order[];
-
-  const filteredOrders = useMemo(() => orders, [orders]);
 
   const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
   const pageOrders = filteredOrders.slice(page * pageSize, (page + 1) * pageSize);
@@ -302,7 +318,7 @@ export default function Orders() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="relative flex-1 min-w-[200px] max-w-sm w-full sm:w-auto">
           <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input
@@ -311,6 +327,19 @@ export default function Orders() {
             placeholder={t("orders.search")}
             className="ps-10"
           />
+        </div>
+        <div className="flex flex-wrap gap-1.5" dir={dir}>
+          {["all", "pending", "confirmed", "delivered", "returned", "cancelled"].map((status) => (
+            <Button
+              key={status}
+              variant={statusFilter === status ? "default" : "outline"}
+              size="sm"
+              onClick={() => { setStatusFilter(status); setPage(0); }}
+              className="text-xs h-9 px-3 rounded-lg"
+            >
+              {t(`orders.${status}`)}
+            </Button>
+          ))}
         </div>
       </div>
 
@@ -332,7 +361,10 @@ export default function Orders() {
                       <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.customer")}</th>
                       <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.phone")}</th>
                       <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.amount")}</th>
+                      <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.trustScore")}</th>
+                      <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.status")}</th>
                       <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.date")}</th>
+                      <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.actions")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -343,6 +375,23 @@ export default function Orders() {
                           <td className="py-3 px-4 font-medium text-foreground">{order.customerName}</td>
                           <td className="py-3 px-4 font-mono text-xs text-muted-foreground" dir="ltr">{order.phoneNumber}</td>
                           <td className="py-3 px-4 font-semibold text-foreground">{order.orderAmount.toFixed(2)} {t("orders.currencyTnd")}</td>
+                          <td className="py-3 px-4">
+                            {order.trustScore != null ? (
+                              <span className={cn(
+                                "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium",
+                                order.riskLevel === "low" ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400" :
+                                order.riskLevel === "medium" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400" :
+                                "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                              )}>
+                                {order.trustScore}%
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4">
+                            <StatusBadge status={order.status} />
+                          </td>
                           <td className="py-3 px-4 text-muted-foreground text-xs whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <span>{new Date(order.createdAt).toLocaleDateString(dir === "rtl" ? "ar-TN" : "fr-TN")}</span>
@@ -355,6 +404,45 @@ export default function Orders() {
                                 >
                                   <FileText className="w-3.5 h-3.5" />
                                 </button>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              {order.status === "pending" && (
+                                <>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-xs gap-1"
+                                    onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: "confirmed" })}
+                                    disabled={updateStatusMutation.isPending}
+                                  >
+                                    <Check className="w-3.5 h-3.5" />
+                                    {t("common.confirm")}
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 px-2 border-rose-500 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs gap-1"
+                                    onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: "cancelled" })}
+                                    disabled={updateStatusMutation.isPending}
+                                  >
+                                    <X className="w-3.5 h-3.5" />
+                                    {t("common.cancel")}
+                                  </Button>
+                                </>
+                              )}
+                              {order.status === "confirmed" && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 px-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 text-xs"
+                                  onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: "delivered" })}
+                                  disabled={updateStatusMutation.isPending}
+                                >
+                                  توصيل
+                                </Button>
                               )}
                             </div>
                           </td>

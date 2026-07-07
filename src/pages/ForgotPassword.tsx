@@ -58,7 +58,7 @@ export default function ForgotPassword() {
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder={fp?.placeholderEmail ?? "example@email.com"}
+                      placeholder="example@email.com"
                       className="ps-10"
                       required
                     />

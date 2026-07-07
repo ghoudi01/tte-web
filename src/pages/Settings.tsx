@@ -21,6 +21,18 @@ export default function Settings() {
   const { t, dir } = useLanguage();
   const [, setLocation] = useLocation();
   const search = useSearch();
+
+  const tabConfig = useMemo(() => [
+    { id: "profile", label: t("settings.profile"), icon: User },
+    { id: "automation", label: t("settings.automation"), icon: Settings2 },
+    { id: "api", label: t("settings.api"), icon: Key },
+    { id: "social", label: t("settings.social"), icon: Facebook },
+    { id: "credits", label: t("settings.credits"), icon: Coins },
+    { id: "security", label: t("settings.security"), icon: Shield },
+  ], [t]);
+
+  const activeTabSet = useMemo(() => new Set(tabConfig.map(t => t.id)), [tabConfig]);
+
   const meQuery = trpc.auth.me.useQuery(undefined, { ...AUTH_ME_QUERY_OPTS });
   const profileQuery = trpc.merchants.getProfile.useQuery();
   const automationQuery = trpc.automation.getMerchantConfig.useQuery();
@@ -107,17 +119,6 @@ export default function Settings() {
   }
   if (!merchant) return null;
 
-  const tabConfig = [
-    { id: "profile", label: t("settings.profile"), icon: User },
-    { id: "automation", label: t("settings.automation"), icon: Settings2 },
-    { id: "api", label: t("settings.api"), icon: Key },
-    { id: "social", label: t("settings.social"), icon: Facebook },
-
-    { id: "credits", label: t("settings.credits"), icon: Coins },
-    { id: "security", label: t("settings.security"), icon: Shield },
-  ];
-
-  const activeTabSet = useMemo(() => new Set(tabConfig.map(t => t.id)), []);
   const safeTab = activeTabSet.has(activeTab) ? activeTab : "profile";
 
   return (

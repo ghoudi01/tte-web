@@ -6,8 +6,8 @@ import { useState } from "react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface Step1PersonalProps {
-  formData: { name: string; email: string; phone: string; password: string; confirmPassword: string };
-  setFormData: (data: { name: string; email: string; phone: string; password: string; confirmPassword: string }) => void;
+  formData: any;
+  setFormData: any;
   isValidEmail: boolean;
   isValidPhone: boolean;
   passwordsMatch: boolean;

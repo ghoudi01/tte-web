@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, Package, Plus, Pencil, Search, MessageCircle, Download } from "lucide-react";
+import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, Package, Plus, Pencil, Search, MessageCircle, Download, Link, X, Trash2, GripVertical } from "lucide-react";
 import { toast } from "sonner";
 
 type Product = {
@@ -34,6 +34,7 @@ type ProductForm = {
   category: string;
   imageUrl: string;
   fbIgEnabled: boolean;
+  fbIgQuestions?: { label: string; type: "text" | "number" | "select"; options?: string; required?: boolean }[];
 };
 
 const emptyForm: ProductForm = {
@@ -43,6 +44,7 @@ const emptyForm: ProductForm = {
   category: "",
   imageUrl: "",
   fbIgEnabled: false,
+  fbIgQuestions: [],
 };
 
 export default function Products() {
@@ -55,6 +57,9 @@ export default function Products() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<ProductForm>(emptyForm);
+  const [urlDialogOpen, setUrlDialogOpen] = useState(false);
+  const [importUrl, setImportUrl] = useState("");
+  const [questionsOpen, setQuestionsOpen] = useState(false);
 
 
   const { data: products = [], isLoading, error, refetch } = trpc.products.list.useQuery(undefined, { refetchOnWindowFocus: false });
@@ -101,6 +106,26 @@ export default function Products() {
 
   const openCreate = () => { resetForm(); setDialogOpen(true); };
 
+  const scrapeMutation = trpc.products.scrapeFromUrl.useMutation({
+    onSuccess: (data) => {
+      setForm({
+        name: data.name || "",
+        description: data.description || "",
+        price: data.price ? String(data.price) : "",
+        category: data.category || "",
+        imageUrl: data.imageUrl || "",
+        fbIgEnabled: true,
+        fbIgQuestions: [],
+      });
+      setEditingId(null);
+      setUrlDialogOpen(false);
+      setImportUrl("");
+      setDialogOpen(true);
+      toast.success(t("products.importFromUrl"));
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
   const openEdit = (product: Product) => {
     setForm({
       name: product.name,
@@ -109,6 +134,12 @@ export default function Products() {
       category: product.category || "",
       imageUrl: product.imageUrl || "",
       fbIgEnabled: product.fbIgEnabled ?? false,
+      fbIgQuestions: Array.isArray((product as any).fbIgQuestions) ? (product as any).fbIgQuestions.map((q: any) => ({
+        label: q.label || "",
+        type: q.type || "text",
+        options: Array.isArray(q.options) ? q.options.join(", ") : q.options || "",
+        required: q.required ?? true,
+      })) : [],
     });
     setEditingId(product.id);
     setDialogOpen(true);
@@ -119,6 +150,13 @@ export default function Products() {
     const priceNum = Number(form.price);
     if (isNaN(priceNum) || priceNum < 0) { toast.error(t("products.price")); return; }
 
+    const questions = (form.fbIgQuestions || []).filter(q => q.label.trim()).map(q => ({
+      label: q.label,
+      type: q.type,
+      options: q.type === "select" ? q.options?.split(",").map(s => s.trim()).filter(Boolean) : undefined,
+      required: q.required ?? true,
+    }));
+
     if (editingId) {
       updateMutation.mutate({
         id: editingId,
@@ -128,6 +166,8 @@ export default function Products() {
         category: form.category || undefined,
         imageUrl: form.imageUrl || undefined,
         fbIgEnabled: form.fbIgEnabled,
+        fbIgQuestions: questions.length > 0 ? questions : undefined,
+        fbIgOptions: undefined,
       });
     } else {
       createMutation.mutate({
@@ -137,6 +177,8 @@ export default function Products() {
         category: form.category || undefined,
         imageUrl: form.imageUrl || undefined,
         fbIgEnabled: form.fbIgEnabled,
+        fbIgQuestions: questions.length > 0 ? questions : undefined,
+        fbIgOptions: undefined,
       });
     }
   };
@@ -187,10 +229,15 @@ export default function Products() {
         </div>
         <div className="flex gap-2">
           {fbConnected && (
-            <Button size="sm" variant="outline" className="gap-2" onClick={() => importMutation.mutate()} disabled={importMutation.isPending}>
-              {importMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
-              {t("products.importFromFacebook")}
-            </Button>
+            <>
+              <Button size="sm" variant="outline" className="gap-2" onClick={() => importMutation.mutate()} disabled={importMutation.isPending}>
+                {importMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {t("products.importFromFacebook")}
+              </Button>
+              <Button size="sm" variant="outline" className="gap-2" onClick={() => setUrlDialogOpen(true)}>
+                <Link className="w-4 h-4" />{t("products.importFromUrl")}
+              </Button>
+            </>
           )}
           <Button size="sm" className="gap-2" onClick={openCreate}>
             <Plus className="w-4 h-4" />{t("products.add")}
@@ -291,6 +338,30 @@ export default function Products() {
         </Card>
       )}
 
+      {/* Import from URL dialog */}
+      <Dialog open={urlDialogOpen} onOpenChange={setUrlDialogOpen}>
+        <DialogContent dir={dir} className="p-0 gap-0 sm:max-w-lg">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle className="flex items-center gap-2"><Link className="w-4 h-4" />{t("products.importFromUrl")}</DialogTitle>
+            <DialogDescription>{t("products.importUrlDescription")}</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => { e.preventDefault(); if (importUrl.trim()) scrapeMutation.mutate({ url: importUrl.trim() }); }} className="p-6 pt-0 space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="import-url">{t("products.imageUrl")}</Label>
+              <Input id="import-url" type="url" value={importUrl} onChange={e => setImportUrl(e.target.value)} placeholder={t("products.importUrlPlaceholder")} required />
+            </div>
+            <div className="flex justify-end gap-2">
+              <DialogClose asChild><Button type="button" variant="outline">{t("common.cancel")}</Button></DialogClose>
+              <Button type="submit" disabled={scrapeMutation.isPending || !importUrl.trim()} className="bg-accent text-accent-foreground hover:bg-accent/90 gap-2">
+                {scrapeMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link className="w-4 h-4" />}
+                {t("products.importUrlBtn")}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Product form dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent dir={dir} className="p-0 gap-0" style={{ maxWidth: "calc(100% - 4rem)" }}>
           <DialogHeader className="px-6 pt-6 pb-2">
@@ -335,6 +406,108 @@ export default function Products() {
                 onCheckedChange={(c) => setForm({ ...form, fbIgEnabled: c })}
               />
             </div>
+
+            {form.fbIgEnabled && (
+              <div className="rounded-lg border bg-card">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="w-4 h-4 text-primary" />
+                    <span className="text-sm font-medium text-foreground">{t("products.botQuestions")}</span>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setForm(f => ({ ...f, fbIgQuestions: [...(f.fbIgQuestions || []), { label: "", type: "text" as const, options: "", required: true }] }))}
+                  >
+                    <Plus className="w-4 h-4 ms-1" />{t("products.addQuestion")}
+                  </Button>
+                </div>
+                <div className="p-4 space-y-3">
+                  {(form.fbIgQuestions || []).map((q, i) => (
+                    <div key={i} className="flex items-start gap-2 p-3 rounded-lg bg-muted/30 border border-border">
+                      <div className="flex-1 space-y-2">
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <Label className="text-xs">{t("products.questionLabel")}</Label>
+                            <Input
+                              value={q.label}
+                              onChange={e => {
+                                const copy = [...(form.fbIgQuestions || [])];
+                                copy[i] = { ...copy[i], label: e.target.value };
+                                setForm(f => ({ ...f, fbIgQuestions: copy }));
+                              }}
+                              placeholder="مثلاً: اختر المقاس"
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">{t("products.questionType")}</Label>
+                            <select
+                              value={q.type}
+                              onChange={e => {
+                                const copy = [...(form.fbIgQuestions || [])];
+                                copy[i] = { ...copy[i], type: e.target.value as any };
+                                setForm(f => ({ ...f, fbIgQuestions: copy }));
+                              }}
+                              className="flex h-8 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                            >
+                              <option value="text">{t("products.questionText")}</option>
+                              <option value="number">{t("products.questionNumber")}</option>
+                              <option value="select">{t("products.questionSelect")}</option>
+                            </select>
+                          </div>
+                        </div>
+                        {q.type === "select" && (
+                          <div>
+                            <Label className="text-xs">{t("products.questionOptions")}</Label>
+                            <Input
+                              value={q.options || ""}
+                              onChange={e => {
+                                const copy = [...(form.fbIgQuestions || [])];
+                                copy[i] = { ...copy[i], options: e.target.value };
+                                setForm(f => ({ ...f, fbIgQuestions: copy }));
+                              }}
+                              placeholder="S, M, L, XL"
+                              className="h-8 text-sm"
+                            />
+                          </div>
+                        )}
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={q.required ?? true}
+                            onChange={e => {
+                              const copy = [...(form.fbIgQuestions || [])];
+                              copy[i] = { ...copy[i], required: e.target.checked };
+                              setForm(f => ({ ...f, fbIgQuestions: copy }));
+                            }}
+                            className="rounded border-border"
+                          />
+                          <span className="text-xs text-muted-foreground">{t("products.questionRequired")}</span>
+                        </label>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0 text-muted-foreground hover:text-destructive"
+                        onClick={() => {
+                          const copy = [...(form.fbIgQuestions || [])];
+                          copy.splice(i, 1);
+                          setForm(f => ({ ...f, fbIgQuestions: copy }));
+                        }}
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
+                  ))}
+                  {(form.fbIgQuestions || []).length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-2">{t("products.botQuestionsDesc")}</p>
+                  )}
+                </div>
+              </div>
+            )}
 
             </div>
 

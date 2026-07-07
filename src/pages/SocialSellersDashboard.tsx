@@ -84,6 +84,10 @@ export default function SocialSellersDashboard({ embedded = false }: { embedded?
   const isConnected = botStatus.data?.connected ?? false;
   const loading = connections.isLoading || metaCrypto.isLoading || botStatus.isLoading || botStats.isLoading;
 
+  const conversionRate = botStats.data?.conversations7d
+    ? Math.round((botStats.data.orders7d / botStats.data.conversations7d) * 100)
+    : 0;
+
   const stats = [
     {
       key: "orders",
@@ -96,6 +100,12 @@ export default function SocialSellersDashboard({ embedded = false }: { embedded?
       icon: MessageSquare,
       label: t("socialSellers.botConversations7d"),
       value: botStats.data?.conversations7d ?? 0,
+    },
+    {
+      key: "conversion",
+      icon: BarChart3,
+      label: "نسبة التحويل (Conversion)",
+      value: `${conversionRate}%`,
     },
     {
       key: "total",
@@ -230,7 +240,7 @@ export default function SocialSellersDashboard({ embedded = false }: { embedded?
 
               {/* Stats Grid */}
               {botIsOn && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 pt-2">
                   {stats.map((s) => {
                     const Icon = s.icon;
                     return (
