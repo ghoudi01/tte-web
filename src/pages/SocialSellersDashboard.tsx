@@ -82,7 +82,7 @@ export default function SocialSellersDashboard({ embedded = false }: { embedded?
   const hasConnection = (connections.data?.length ?? 0) > 0;
   const botIsOn = botStatus.data?.enabled ?? false;
   const isConnected = botStatus.data?.connected ?? false;
-  const loading = metaCrypto.isLoading || botStatus.isLoading || botStats.isLoading;
+  const loading = connections.isLoading || metaCrypto.isLoading || botStatus.isLoading || botStats.isLoading;
 
   const stats = [
     {
@@ -114,29 +114,38 @@ export default function SocialSellersDashboard({ embedded = false }: { embedded?
   if (embedded) {
     return (
       <div className="space-y-4">
-        {!hasConnection && (
-          <Button asChild disabled={!metaCrypto.data?.configured}>
-            <a href={connectHref}>{t("socialSellers.connectButton")}</a>
-          </Button>
-        )}
-        <ul className="text-sm text-muted-foreground space-y-2">
-          {(connections.data ?? []).map((c: { id: string; facebookPageId: string; instagramBusinessAccountId?: string }) => (
-            <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 border bg-card rounded-lg px-3 py-2">
-              <span>
-                {t("socialSellers.pageLabel")} <span className="font-mono text-xs">{c.facebookPageId}</span>
-                {c.instagramBusinessAccountId && (
-                  <> · {t("socialSellers.instagramLabel")} <span className="font-mono text-xs">{c.instagramBusinessAccountId}</span></>
-                )}
-              </span>
-              <Button type="button" variant="ghost" size="sm" className="text-red-600" onClick={() => deleteConn.mutate({ connectionId: c.id })} disabled={deleteConn.isPending}>
-                <Trash2 className="w-4 h-4" />
+        {loading ? (
+          <div className="space-y-3">
+            <Skeleton className="h-9 w-40" />
+            <Skeleton className="h-10 w-full" />
+          </div>
+        ) : (
+          <>
+            {!hasConnection && (
+              <Button asChild disabled={!metaCrypto.data?.configured}>
+                <a href={connectHref}>{t("socialSellers.connectButton")}</a>
               </Button>
-            </li>
-          ))}
-          {!hasConnection && (
-            <li className="text-muted-foreground">{t("socialSellers.noConnections")}</li>
-          )}
-        </ul>
+            )}
+            <ul className="text-sm text-muted-foreground space-y-2">
+              {(connections.data ?? []).map((c: { id: string; facebookPageId: string; instagramBusinessAccountId?: string }) => (
+                <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 border bg-card rounded-lg px-3 py-2">
+                  <span>
+                    {t("socialSellers.pageLabel")} <span className="font-mono text-xs">{c.facebookPageId}</span>
+                    {c.instagramBusinessAccountId && (
+                      <> · {t("socialSellers.instagramLabel")} <span className="font-mono text-xs">{c.instagramBusinessAccountId}</span></>
+                    )}
+                  </span>
+                  <Button type="button" variant="ghost" size="sm" className="text-red-600" onClick={() => deleteConn.mutate({ connectionId: c.id })} disabled={deleteConn.isPending}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </li>
+              ))}
+              {!hasConnection && (
+                <li className="text-muted-foreground">{t("socialSellers.noConnections")}</li>
+              )}
+            </ul>
+          </>
+        )}
       </div>
     );
   }
