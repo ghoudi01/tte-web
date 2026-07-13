@@ -15,8 +15,8 @@ function getBrowserLang(): Lang {
   try {
     const browser = navigator.language.slice(0, 2);
     if (browser === "fr") return "fr";
-    if (browser === "ar") return "ar";
-    return "en";
+    if (browser === "en") return "en";
+    return "ar";
   } catch {
     return "ar";
   }

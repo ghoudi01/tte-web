@@ -47,6 +47,14 @@ const SIDEBAR_SECTIONS = [
       { id: "orders-get", label: "استعلام طلب", method: "GET" },
     ],
   },
+  {
+    id: "automation",
+    label: "الأتمتة",
+    children: [
+      { id: "auto-call", label: "الاتصال التلقائي", method: "POST" },
+      { id: "auto-review", label: "المراجعة التلقائية", method: "POST" },
+    ],
+  },
   { id: "schemas", label: "الأنواع والقيم" },
   { id: "rate-limits", label: "حدود الطلبات" },
   { id: "errors", label: "أكواد الأخطاء" },
@@ -148,6 +156,47 @@ const ENDPOINTS: Record<
       { name: "orderId", type: "path", desc: "معرف الطلب (في المسار)" },
     ],
   },
+  "auto-call": {
+    method: "POST",
+    path: "/automation/call",
+    title: "الاتصال التلقائي بالزبون",
+    desc: "يُشغّل اتصالاً تلقائياً بالزبون لتأكيد الطلب والتأكد من جدية الشراء. يعيد حالة الاتصال.",
+    body: `{
+  "order_id": "ORD-123",
+  "phone": "+216 XX XXX XXX",
+  "language": "ar"
+}`,
+    response: `{
+  "call_id": "call_abc123",
+  "status": "initiated",
+  "message": "تم بدء الاتصال"
+}`,
+    params: [
+      { name: "order_id", type: "string", desc: "معرف الطلب" },
+      { name: "phone", type: "string", desc: "رقم الهاتف بصيغة دولية" },
+      { name: "language", type: "string", desc: "اختياري: لغة المكالمة (ar/fr/en)" },
+    ],
+  },
+  "auto-review": {
+    method: "POST",
+    path: "/automation/review",
+    title: "المراجعة التلقائية للطلب",
+    desc: "يقيم الطلب تلقائياً بناءً على درجة الثقة. إذا كانت الثقة عالية، يؤكد الطلب وينشئه دون تدخل يدوي.",
+    body: `{
+  "order_id": "ORD-123",
+  "trust_score": 0.85
+}`,
+    response: `{
+  "order_id": "ORD-123",
+  "decision": "approved",
+  "confidence": 0.92,
+  "auto_created": true
+}`,
+    params: [
+      { name: "order_id", type: "string", desc: "معرف الطلب" },
+      { name: "trust_score", type: "number", desc: "درجة الثقة (0 إلى 1)" },
+    ],
+  },
 };
 
 const ERROR_CODES = [
@@ -163,7 +212,7 @@ export default function ApiDocs() {
   const [, setLocation] = useLocation();
   const { dir } = useLanguage();
   const [copied, setCopied] = useState<string | null>(null);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ verify: true, orders: true });
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({ verify: true, orders: true, automation: true });
   const [docSearch, setDocSearch] = useState("");
 
   const filteredSidebar = useMemo(() => {
@@ -544,6 +593,18 @@ export default function ApiDocs() {
                     <strong className="text-foreground">تقارير وتحليلات:</strong> استدعِ <code className="bg-muted px-1 rounded text-sm text-accent">GET /orders/:orderId</code> أو خزّن النتائج محلياً لتحليل معدلات التحقق والثقة حسب المنطقة أو الفترة.
                   </div>
                 </li>
+                <li className="flex gap-3">
+                  <span className="shrink-0 w-6 h-6 rounded-full bg-accent/10 text-accent flex items-center justify-center text-sm font-bold">5</span>
+                  <div>
+                    <strong className="text-foreground">الاتصال التلقائي (Auto-call):</strong> استخدم <code className="bg-muted px-1 rounded text-sm text-accent">POST /automation/call</code> لتأكيد الطلبات تلقائياً عبر مكالمة هاتفية. يُستخدم لتقليل الارتجاعات والتأكد من جدية المشتري.
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="shrink-0 w-6 h-6 rounded-full bg-accent/10 text-accent flex items-center justify-center text-sm font-bold">6</span>
+                  <div>
+                    <strong className="text-foreground">المراجعة التلقائية (Auto-review):</strong> استخدم <code className="bg-muted px-1 rounded text-sm text-accent">POST /automation/review</code> للموافقة التلقائية على الطلبات ذات درجة الثقة العالية. يقلل الوقت والجهد في مراجعة الطلبات الآمنة.
+                  </div>
+                </li>
               </ul>
             </section>
 
@@ -679,6 +740,9 @@ console.log(data.trust_score, data.recommendation);`}</pre>
               <ul className="space-y-3 text-muted-foreground border-e-2 border-accent/30 ps-4">
                 <li>
                   <strong className="text-foreground">v1.0.0 (2024):</strong> إطلاق أول نسخة: التحقق من الهاتف (OTP)، حساب درجة الثقة للطلب، استعلام الطلب. المصادقة بمفتاح API، حدود الطلبات، وأكواد الأخطاء.
+                </li>
+                <li>
+                  <strong className="text-foreground">v1.1.0:</strong> إضافة نقاط نهاية الأتمتة: <code className="bg-muted px-1 rounded text-sm text-accent">POST /automation/call</code> للاتصال التلقائي و <code className="bg-muted px-1 rounded text-sm text-accent">POST /automation/review</code> للمراجعة التلقائية للطلبات.
                 </li>
                 <li>
                   <strong className="text-foreground">قادم:</strong> ويب هوكس، توسيع نقاط النهاية (مثلاً قائمة الطلبات، تصدير تقارير)، وتحسينات على صيغ الاستجابة.

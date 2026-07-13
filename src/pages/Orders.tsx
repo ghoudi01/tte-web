@@ -4,7 +4,8 @@ import { useLocation } from "wouter";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose } from "@/components/ui/dialog";
-import { AlertTriangle, Loader2, Package, Plus, Search, CheckCircle2, ChevronLeft, ChevronRight, FileText, ChevronDown, ChevronUp, Sparkles, Check, X } from "lucide-react";
+import { AlertTriangle, Loader2, Package, Plus, Search, ChevronLeft, ChevronRight, FileText, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 const TUNISIAN_GOVERNORATES = [
@@ -53,16 +54,7 @@ const emptyForm: NewOrderForm = {
   orderAmount: "",
 };
 
-const TERMINAL_STATUSES = ["delivered", "returned", "cancelled"] as const;
-
-const OUTCOMES = [
-  { value: "success", labelAr: "تم التوصيل بنجاح", labelFr: "Livré avec succès", labelEn: "Delivered successfully", icon: CheckCircle2 },
-  { value: "fraud", labelAr: "احتيال", labelFr: "Fraude", labelEn: "Fraud" },
-  { value: "complaint", labelAr: "شكوى", labelFr: "Réclamation", labelEn: "Complaint" },
-] as const;
-
 type ReportForm = {
-  reportKind: string;
   trackingNumber: string;
   carrier: string;
   notes: string;
@@ -70,32 +62,14 @@ type ReportForm = {
 };
 
 function defaultReportForm(): ReportForm {
-  return { reportKind: "", trackingNumber: "", carrier: "", notes: "", showMore: false };
+  return { trackingNumber: "", carrier: "", notes: "", showMore: false };
 }
 
 const ORDER_TABS = [
   { value: "all", labelKey: "orders.all" },
-  { value: "pending", labelKey: "orders.pending" },
-  { value: "placed", labelKey: "orders.placed" },
-  { value: "confirmed", labelKey: "orders.confirmed" },
-  { value: "shipped", labelKey: "orders.shipped" },
-  { value: "delivered", labelKey: "orders.delivered" },
-  { value: "returned", labelKey: "orders.returned" },
-  { value: "cancelled", labelKey: "orders.cancelled" },
+  { value: "accepted", labelKey: "orders.accepted" },
+  { value: "rejected", labelKey: "orders.rejected" },
 ] as const;
-
-function StatusBadge({ status }: { status?: string }) {
-  const { t } = useLanguage();
-  const cfg: Record<string, { label: string; class: string }> = {
-    pending: { label: t("orders.pending"), class: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200" },
-    delivered: { label: t("orders.delivered"), class: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200" },
-    returned: { label: t("orders.returned"), class: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200" },
-    cancelled: { label: t("orders.cancelled"), class: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-200" },
-    confirmed: { label: t("orders.confirmed"), class: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200" },
-  };
-  const c = cfg[status ?? ""] ?? { label: status ?? "-", class: "bg-slate-100 dark:bg-slate-800" };
-  return <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border", c.class)}>{c.label}</span>;
-}
 
 function LoadingSkeleton() {
   return (
@@ -117,7 +91,7 @@ function LoadingSkeleton() {
 }
 
 export default function Orders() {
-  const { t, dir, lang } = useLanguage();
+  const { t, dir } = useLanguage();
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
 
@@ -129,7 +103,6 @@ export default function Orders() {
   const [form, setForm] = useState<NewOrderForm>(emptyForm);
   const [reportOrder, setReportOrder] = useState<Order | null>(null);
   const [reportForm, setReportForm] = useState<ReportForm>(defaultReportForm);
-  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
 
   const ordersQuery = trpc.orders.list.useQuery({
     status: statusFilter !== "all" ? statusFilter : undefined,
@@ -149,18 +122,9 @@ export default function Orders() {
   });
 
   const updateStatusMutation = trpc.orders.updateStatus.useMutation({
-    onSuccess: (data, variables) => {
+    onSuccess: () => {
       utils.orders.list.invalidate();
-      if (TERMINAL_STATUSES.includes(variables.status as typeof TERMINAL_STATUSES[number])) {
-        const order = (ordersQuery.data ?? []).find((o: Order) => o.id === variables.orderId);
-        if (order) {
-          setReportOrder(order);
-          setPendingStatus(variables.status);
-          setReportForm(defaultReportForm());
-        }
-      } else {
-        toast.success(t("orders.statusUpdated"));
-      }
+      toast.success(t("orders.statusUpdated"));
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -172,7 +136,6 @@ export default function Orders() {
         icon: <Sparkles className="w-5 h-5 text-amber-400" />,
       });
       setReportOrder(null);
-      setPendingStatus(null);
       utils.orders.list.invalidate();
     },
     onError: (err: Error) => toast.error(err.message),
@@ -204,38 +167,20 @@ export default function Orders() {
     });
   };
 
-  const handleStatusChange = (orderId: string, status: string) => {
-    updateStatusMutation.mutate({ orderId, status });
-  };
-
   const handleSkipReport = () => {
     setReportOrder(null);
-    setPendingStatus(null);
     toast.success(t("orders.statusUpdated"));
   };
 
   const handleSubmitReport = () => {
-    if (!reportOrder || !pendingStatus) return;
-    if (!reportForm.reportKind) {
-      toast.error(t("orders.selectOutcome"));
-      return;
-    }
+    if (!reportOrder) return;
     enrichMutation.mutate({
       orderId: reportOrder.id,
-      reportKind: reportForm.reportKind,
+      reportKind: "success",
       trackingNumber: reportForm.trackingNumber || undefined,
       carrier: reportForm.carrier || undefined,
       notes: reportForm.notes || undefined,
     });
-  };
-
-  const isDelivered = pendingStatus === "delivered";
-  const outcomes = OUTCOMES;
-
-  const outcomeLabel = (o: typeof outcomes[number]) => {
-    if (lang === "ar") return (o as any).labelAr;
-    if (lang === "fr") return (o as any).labelFr;
-    return (o as any).labelEn;
   };
 
   if (ordersQuery.isPending && !ordersQuery.data) return <LoadingSkeleton />;
@@ -329,7 +274,7 @@ export default function Orders() {
           />
         </div>
         <div className="flex flex-wrap gap-1.5" dir={dir}>
-          {["all", "pending", "confirmed", "delivered", "returned", "cancelled"].map((status) => (
+          {["all", "accepted", "rejected"].map((status) => (
             <Button
               key={status}
               variant={statusFilter === status ? "default" : "outline"}
@@ -355,23 +300,21 @@ export default function Orders() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-muted/30">
-                      <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.customer")}</th>
-                      <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.phone")}</th>
-                      <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.amount")}</th>
-                      <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.trustScore")}</th>
-                      <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.status")}</th>
-                      <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.date")}</th>
-                      <th className="text-start py-3 px-4 font-medium text-muted-foreground whitespace-nowrap">{t("orders.actions")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {pageOrders.map((order) => {
-                      const isTerminal = TERMINAL_STATUSES.includes(order.status as typeof TERMINAL_STATUSES[number]);
-                      return (
-                        <tr key={order.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="text-start">{t("orders.customer")}</TableHead>
+                      <TableHead className="text-start">{t("orders.phone")}</TableHead>
+                      <TableHead className="text-start">{t("orders.amount")}</TableHead>
+                      <TableHead className="text-start">{t("orders.trustScore")}</TableHead>
+                      <TableHead className="text-start">{t("orders.status")}</TableHead>
+                      <TableHead className="text-start">{t("orders.date")}</TableHead>
+                      <TableHead className="text-start">{t("orders.actions")}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pageOrders.map((order) => (
+                        <TableRow key={order.id}>
                           <td className="py-3 px-4 font-medium text-foreground">{order.customerName}</td>
                           <td className="py-3 px-4 font-mono text-xs text-muted-foreground" dir="ltr">{order.phoneNumber}</td>
                           <td className="py-3 px-4 font-semibold text-foreground">{order.orderAmount.toFixed(2)} {t("orders.currencyTnd")}</td>
@@ -390,67 +333,53 @@ export default function Orders() {
                             )}
                           </td>
                           <td className="py-3 px-4">
-                            <StatusBadge status={order.status} />
+                            {order.status === "pending" ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium border bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border-amber-200">
+                                {t("orders.pending")}
+                              </span>
+                            ) : (
+                              <Select
+                                value={order.status}
+                                onValueChange={(v) => {
+                                  if (v !== order.status) updateStatusMutation.mutate({ orderId: order.id, status: v });
+                                }}
+                                disabled={updateStatusMutation.isPending}
+                              >
+                                <SelectTrigger className={cn(
+                                  "h-7 w-[135px] text-xs border-0 font-medium",
+                                  order.status === "accepted" ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300" :
+                                  "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
+                                )}>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="accepted">{t("orders.accepted")}</SelectItem>
+                                  <SelectItem value="rejected">{t("orders.rejected")}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
                           </td>
                           <td className="py-3 px-4 text-muted-foreground text-xs whitespace-nowrap">
-                            <div className="flex items-center gap-2">
-                              <span>{new Date(order.createdAt).toLocaleDateString(dir === "rtl" ? "ar-TN" : "fr-TN")}</span>
-                              {isTerminal && (
-                                <button
-                                  type="button"
-                                  onClick={() => { setReportOrder(order); setPendingStatus(order.status); setReportForm(defaultReportForm()); }}
-                                  className="text-muted-foreground hover:text-foreground transition-colors"
-                                  title={t("orders.addReport")}
-                                >
-                                  <FileText className="w-3.5 h-3.5" />
-                                </button>
-                              )}
-                            </div>
+                            <span>{new Date(order.createdAt).toLocaleDateString(dir === "rtl" ? "ar-TN" : "fr-TN")}</span>
                           </td>
                           <td className="py-3 px-4 whitespace-nowrap">
                             <div className="flex items-center gap-2">
-                              {order.status === "pending" && (
-                                <>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-7 px-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 text-xs gap-1"
-                                    onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: "confirmed" })}
-                                    disabled={updateStatusMutation.isPending}
-                                  >
-                                    <Check className="w-3.5 h-3.5" />
-                                    {t("common.confirm")}
-                                  </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    className="h-7 px-2 border-rose-500 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/20 text-xs gap-1"
-                                    onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: "cancelled" })}
-                                    disabled={updateStatusMutation.isPending}
-                                  >
-                                    <X className="w-3.5 h-3.5" />
-                                    {t("common.cancel")}
-                                  </Button>
-                                </>
-                              )}
-                              {order.status === "confirmed" && (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 px-2 border-blue-500 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 text-xs"
-                                  onClick={() => updateStatusMutation.mutate({ orderId: order.id, status: "delivered" })}
-                                  disabled={updateStatusMutation.isPending}
-                                >
-                                  توصيل
-                                </Button>
-                              )}
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 px-2 text-xs gap-1"
+                                disabled={order.status !== "accepted"}
+                                onClick={() => { setReportOrder(order); setReportForm(defaultReportForm()); }}
+                              >
+                                <FileText className="w-3.5 h-3.5" />
+                                {t("orders.createReport")}
+                              </Button>
                             </div>
                           </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                        </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
 
               <div className="flex items-center justify-between px-4 py-3 border-t border-border">
@@ -484,13 +413,13 @@ export default function Orders() {
         </CardContent>
       </Card>
 
-      {/* Quick report dialog */}
-      <Dialog open={reportOrder !== null} onOpenChange={(open) => { if (!open) { setReportOrder(null); setPendingStatus(null); } }}>
+      {/* Report dialog */}
+      <Dialog open={reportOrder !== null} onOpenChange={(open) => { if (!open) setReportOrder(null); }}>
         <DialogContent dir={dir} className="p-0 gap-0 sm:max-w-md">
           <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle className="flex items-center gap-2">
               <FileText className="w-5 h-5 text-accent" />
-              {isDelivered ? t("orders.reportDelivery") : t("orders.reportReturn")}
+              {t("orders.reportDelivery")}
             </DialogTitle>
             <DialogDescription>
               {reportOrder && (
@@ -502,79 +431,51 @@ export default function Orders() {
           </DialogHeader>
 
           <div className="px-6 py-4 space-y-4">
-            <div>
-              <Label className="text-sm font-medium mb-2 block">{t("orders.outcome")}</Label>
-              <div className="flex flex-wrap gap-2">
-                {outcomes.map((o) => {
-                  const isSelected = reportForm.reportKind === o.value;
-                  const Icon = (o as any).icon;
-                  return (
-                    <button
-                      key={o.value}
-                      type="button"
-                      onClick={() => setReportForm({ ...reportForm, reportKind: o.value })}
-                      className={cn(
-                        "flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm transition-colors",
-                        isSelected
-                          ? "border-accent bg-accent/10 text-accent font-medium"
-                          : "border-border hover:border-accent/50 hover:bg-muted/50"
-                      )}
-                    >
-                      {Icon && <Icon className="w-4 h-4" />}
-                      {outcomeLabel(o)}
-                    </button>
-                  );
-                })}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="rpt-tracking" className="text-xs">{t("orders.trackingNumber")}</Label>
+                <Input
+                  id="rpt-tracking"
+                  value={reportForm.trackingNumber}
+                  onChange={(e) => setReportForm({ ...reportForm, trackingNumber: e.target.value })}
+                  placeholder={t("orders.trackingPlaceholder")}
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="rpt-carrier" className="text-xs">{t("orders.carrier")}</Label>
+                <Input
+                  id="rpt-carrier"
+                  value={reportForm.carrier}
+                  onChange={(e) => setReportForm({ ...reportForm, carrier: e.target.value })}
+                  placeholder={t("orders.carrierPlaceholder")}
+                  className="h-8 text-sm"
+                />
               </div>
             </div>
 
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label htmlFor="rpt-tracking" className="text-xs">{t("orders.trackingNumber")}</Label>
-                  <Input
-                    id="rpt-tracking"
-                    value={reportForm.trackingNumber}
-                    onChange={(e) => setReportForm({ ...reportForm, trackingNumber: e.target.value })}
-                    placeholder={t("orders.trackingPlaceholder")}
-                    className="h-8 text-sm"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="rpt-carrier" className="text-xs">{t("orders.carrier")}</Label>
-                  <Input
-                    id="rpt-carrier"
-                    value={reportForm.carrier}
-                    onChange={(e) => setReportForm({ ...reportForm, carrier: e.target.value })}
-                    placeholder={t("orders.carrierPlaceholder")}
-                    className="h-8 text-sm"
-                  />
-                </div>
+            <button
+              type="button"
+              onClick={() => setReportForm({ ...reportForm, showMore: !reportForm.showMore })}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {reportForm.showMore ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              {reportForm.showMore ? t("orders.hideDetails") : t("orders.addDetails")}
+            </button>
+
+            {reportForm.showMore && (
+              <div className="space-y-2">
+                <Label htmlFor="rpt-notes" className="text-xs">{t("orders.notes")}</Label>
+                <Textarea
+                  id="rpt-notes"
+                  value={reportForm.notes}
+                  onChange={(e) => setReportForm({ ...reportForm, notes: e.target.value })}
+                  placeholder={t("orders.notesPlaceholder")}
+                  rows={2}
+                  className="text-sm"
+                />
               </div>
-
-              <button
-                type="button"
-                onClick={() => setReportForm({ ...reportForm, showMore: !reportForm.showMore })}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {reportForm.showMore ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                {reportForm.showMore ? t("orders.hideDetails") : t("orders.addDetails")}
-              </button>
-
-              {reportForm.showMore && (
-                <div className="space-y-2">
-                  <Label htmlFor="rpt-notes" className="text-xs">{t("orders.notes")}</Label>
-                  <Textarea
-                    id="rpt-notes"
-                    value={reportForm.notes}
-                    onChange={(e) => setReportForm({ ...reportForm, notes: e.target.value })}
-                    placeholder={t("orders.notesPlaceholder")}
-                    rows={2}
-                    className="text-sm"
-                  />
-                </div>
-              )}
-            </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between gap-2 border-t px-6 py-4 bg-background">
@@ -586,7 +487,7 @@ export default function Orders() {
                 type="button"
                 variant="outline"
                 size="sm"
-                onClick={() => { setReportOrder(null); setPendingStatus(null); }}
+                onClick={() => setReportOrder(null)}
               >
                 {t("common.cancel")}
               </Button>
@@ -594,7 +495,7 @@ export default function Orders() {
                 type="button"
                 size="sm"
                 className="bg-accent text-accent-foreground hover:bg-accent/90"
-                disabled={enrichMutation.isPending || !reportForm.reportKind}
+                disabled={enrichMutation.isPending}
                 onClick={handleSubmitReport}
               >
                 {enrichMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}

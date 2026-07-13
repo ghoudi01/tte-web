@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
@@ -18,6 +18,10 @@ import {
   CheckCircle2,
   Power,
   BarChart3,
+  MessageCircleReply,
+  PhoneCall,
+  ShieldCheck,
+  Settings2,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { cn } from "@/lib/utils";
@@ -73,6 +77,8 @@ export default function SocialSellersDashboard({ embedded = false }: { embedded?
     }
   }, [t]);
 
+  const [, setLocation] = useLocation();
+
   const connectHref = (() => {
     const origin = apiOriginForMetaOAuth();
     const path = "/api/meta/page/start";
@@ -83,6 +89,12 @@ export default function SocialSellersDashboard({ embedded = false }: { embedded?
   const botIsOn = botStatus.data?.enabled ?? false;
   const isConnected = botStatus.data?.connected ?? false;
   const loading = connections.isLoading || metaCrypto.isLoading || botStatus.isLoading || botStats.isLoading;
+
+  const automations = [
+    { key: "autoReply", icon: MessageCircleReply, label: t("socialSellers.autoReply"), desc: t("socialSellers.autoReplyDesc") },
+    { key: "autoCall", icon: PhoneCall, label: t("socialSellers.autoCall"), desc: t("socialSellers.autoCallDesc") },
+    { key: "autoReview", icon: ShieldCheck, label: t("socialSellers.autoReview"), desc: t("socialSellers.autoReviewDesc") },
+  ];
 
   const conversionRate = botStats.data?.conversations7d
     ? Math.round((botStats.data.orders7d / botStats.data.conversations7d) * 100)
@@ -257,6 +269,44 @@ export default function SocialSellersDashboard({ embedded = false }: { embedded?
                   })}
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          {/* Automation Card */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-xl bg-violet-100 dark:bg-violet-900/50">
+                  <Settings2 className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">{t("socialSellers.automationTitle")}</CardTitle>
+                  <CardDescription>{t("socialSellers.automationDesc")}</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid sm:grid-cols-3 gap-3 mb-4">
+                {automations.map((a) => {
+                  const Icon = a.icon;
+                  return (
+                    <div key={a.key} className="flex gap-3 rounded-lg border bg-card p-4">
+                      <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400 shrink-0 h-fit">
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground">{a.label}</p>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{a.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">{t("socialSellers.automationNote")}</p>
+              <Button variant="outline" size="sm" onClick={() => setLocation("/products")} className="gap-2">
+                <Settings2 className="w-4 h-4" />
+                {t("socialSellers.manageProducts")}
+              </Button>
             </CardContent>
           </Card>
 

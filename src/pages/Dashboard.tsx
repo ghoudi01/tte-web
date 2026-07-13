@@ -9,13 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import {
   Package, Phone, FileText, Plug, TrendingUp, AlertTriangle,
-  CheckCircle2, Shield, ChevronLeft, ShoppingCart,
+  CheckCircle2, Shield, ChevronLeft, ChevronRight, ShoppingCart,
   BarChart3, Target, Coins, DollarSign, Flame, CircleAlert,
-  ArrowRight,
+  ArrowRight, Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -69,6 +71,9 @@ export default function Dashboard() {
   const merchant = dashboardQuery.data?.merchant ?? null;
   const orders: OrderRow[] = dashboardQuery.data?.orders ?? [];
   const analytics = dashboardQuery.data?.analytics;
+  const [orderPage, setOrderPage] = useState(0);
+  const [orderSearch, setOrderSearch] = useState("");
+  const orderPageSize = 5;
 
   const locale = lang === "ar" ? "ar-TN" : lang === "fr" ? "fr-TN" : "en-US";
   const total = analytics?.totalOrders ?? 0;
@@ -105,16 +110,17 @@ export default function Dashboard() {
     { label: t("dashboard.analytics"), path: "/analytics", icon: BarChart3 },
   ];
 
-  if (dashboardQuery.isLoading || dashboardQuery.isFetching) return <LoadingSkeleton />;
+  if (dashboardQuery.isLoading) return <LoadingSkeleton />;
 
   if (dashboardQuery.error) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="max-w-md">
+          <div className="h-1 bg-gradient-to-r from-violet-500 to-indigo-500 rounded-t-xl" />
           <CardContent className="pt-6 text-center">
             <AlertTriangle className="w-12 h-12 text-rose-500 dark:text-rose-400 mx-auto mb-4" />
             <p className="text-lg font-medium text-foreground">{t("dashboard.error")}</p>
-            <p className="text-sm text-muted-foreground mt-2">{t("dashboard.retry")}</p>
+            <Button variant="outline" className="mt-4" onClick={() => dashboardQuery.refetch()}>{t("dashboard.retry")}</Button>
           </CardContent>
         </Card>
       </div>
@@ -142,6 +148,7 @@ export default function Dashboard() {
       {/* Gamification row: streak + completion rate */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card className="border-0 shadow-sm bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-900/20">
+          <div className="h-1 bg-gradient-to-r from-orange-500 to-amber-500 rounded-t-xl" />
           <CardContent className="p-3 flex items-center gap-3">
             <div className={cn(
               "p-2 rounded-full",
@@ -157,6 +164,7 @@ export default function Dashboard() {
         </Card>
 
         <Card className="border-0 shadow-sm bg-gradient-to-br from-emerald-50 to-green-50 dark:from-emerald-950/30 dark:to-green-900/20">
+          <div className="h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-t-xl" />
           <CardContent className="p-3 flex items-center gap-3">
             <div className={cn(
               "p-2 rounded-full",
@@ -164,10 +172,13 @@ export default function Dashboard() {
             )}>
               <CheckCircle2 className="w-4 h-4" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground">{t("dashboard.reportRate")}</p>
               <p className="text-lg font-bold">{reportCompletionRate}%</p>
             </div>
+            <Button size="sm" variant="outline" className="shrink-0 gap-1" onClick={() => setLocation("/reports")}>
+              {t("dashboard.reportNow")} <ArrowRight className="w-3 h-3 rtl:rotate-180" />
+            </Button>
           </CardContent>
         </Card>
 
@@ -211,8 +222,8 @@ export default function Dashboard() {
         {quickActions.map((action, i) => (
           <Button key={action.path} onClick={() => setLocation(action.path)}
             className={cn(
-              "h-auto py-4 px-4 text-white shadow-sm hover:shadow-md transition-all",
-              ["bg-emerald-600 hover:bg-emerald-700", "bg-blue-600 hover:bg-blue-700", "bg-violet-600 hover:bg-violet-700", "bg-amber-600 hover:bg-amber-700"][i]
+              "h-auto py-4 px-4 shadow-sm hover:shadow-md transition-all",
+              ["bg-emerald-600 hover:bg-emerald-700 text-white", "bg-blue-600 hover:bg-blue-700 text-white", "bg-violet-600 hover:bg-violet-700 text-white", "bg-amber-600 hover:bg-amber-700 text-white"][i]
             )}>
             <div className="flex items-center gap-3"><action.icon className="w-5 h-5" /><span className="font-medium">{action.label}</span></div>
           </Button>
@@ -222,6 +233,7 @@ export default function Dashboard() {
       {/* Charts */}
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="shadow-sm border-0 dark:bg-card">
+          <div className="h-1 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-t-xl" />
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2"><TrendingUp className="w-4 h-4 text-emerald-500" />{t("dashboard.orderAnalysis")}</CardTitle>
           </CardHeader>
@@ -242,6 +254,7 @@ export default function Dashboard() {
         </Card>
 
         <Card className="shadow-sm border-0 dark:bg-card">
+          <div className="h-1 bg-gradient-to-r from-violet-500 to-purple-500 rounded-t-xl" />
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2"><Target className="w-4 h-4 text-violet-500" />{t("dashboard.performance")}</CardTitle>
           </CardHeader>
@@ -268,51 +281,84 @@ export default function Dashboard() {
       {/* Bottom Row */}
       <div className="grid lg:grid-cols-3 gap-4">
         <Card className="shadow-sm border-0 dark:bg-card lg:col-span-2">
+          <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-t-xl" />
           <CardHeader className="pb-2 flex-row items-center justify-between">
             <CardTitle className="text-base flex items-center gap-2"><ShoppingCart className="w-4 h-4 text-blue-500" />{t("dashboard.recentOrders")}</CardTitle>
-            <Button variant="ghost" size="sm" onClick={() => setLocation("/orders")} className="text-xs gap-1">{t("dashboard.viewAll")} <ChevronLeft className="w-3 h-3 ltr:rotate-180" /></Button>
+            <Button variant="outline" size="sm" onClick={() => setLocation("/orders")} className="text-xs gap-1">{t("dashboard.viewAll")} <ChevronLeft className="w-3 h-3 rtl:rotate-180" /></Button>
           </CardHeader>
           <CardContent className="p-0">
-            {orders.length === 0 ? (
-              <div className="text-center py-12 text-muted-foreground">
-                <Package className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                <p className="text-sm">{t("dashboard.noOrders")}</p>
-                <Button variant="outline" size="sm" className="mt-3" onClick={() => setLocation("/orders")}>{t("dashboard.newOrder")}</Button>
+            <div className="px-4 pt-2 pb-1">
+              <div className="relative max-w-xs">
+                <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                <Input value={orderSearch} onChange={e => { setOrderSearch(e.target.value); setOrderPage(0); }} placeholder={t("orders.search")} className="ps-8 h-9 text-xs" />
               </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead><tr className="border-b border-border bg-muted/30">
-                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t("orders.customer")}</th>
-                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t("orders.phone")}</th>
-                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t("orders.amount")}</th>
-                    <th className="text-start py-3 px-4 font-medium text-muted-foreground">{t("orders.status")}</th>
-                  </tr></thead>
-                  <tbody>
-                    {orders.slice(0, 5).map(o => (
-                      <tr key={o.id} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
-                        <td className="py-3 px-4 font-medium text-foreground">{o.customerName || "-"}</td>
-                        <td className="py-3 px-4 font-mono text-xs text-muted-foreground" dir="ltr">{o.phoneNumber || "-"}</td>
-                        <td className="py-3 px-4 font-semibold text-foreground">{fmtCurrency(o.orderAmount || 0, locale)}</td>
-                        <td className="py-3 px-4"><StatusBadge status={o.status} /></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            </div>
+            {(() => {
+              const filtered = orders.filter(o => !orderSearch || o.customerName?.toLowerCase().includes(orderSearch.toLowerCase()) || o.phoneNumber?.includes(orderSearch));
+              const totalFilteredPages = Math.max(1, Math.ceil(filtered.length / orderPageSize));
+              const paged = filtered.slice(orderPage * orderPageSize, (orderPage + 1) * orderPageSize);
+              return (
+                <>
+                  {paged.length === 0 ? (
+                    <div className="text-center py-10 text-muted-foreground">
+                      <ShoppingCart className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">{orderSearch ? t("common.noData") : t("dashboard.noOrders")}</p>
+                      {!orderSearch && <Button variant="outline" size="sm" className="mt-3" onClick={() => setLocation("/orders")}>{t("dashboard.newOrder")}</Button>}
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead className="text-start">{t("orders.customer")}</TableHead>
+                            <TableHead className="text-start">{t("orders.phone")}</TableHead>
+                            <TableHead className="text-start">{t("orders.amount")}</TableHead>
+                            <TableHead className="text-start">{t("orders.status")}</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {paged.map(o => (
+                            <TableRow key={o.id}>
+                              <TableCell className="font-medium text-foreground">{o.customerName || "-"}</TableCell>
+                              <TableCell className="font-mono text-xs text-muted-foreground" dir="ltr">{o.phoneNumber || "-"}</TableCell>
+                              <TableCell className="font-semibold text-foreground">{fmtCurrency(o.orderAmount || 0, locale)}</TableCell>
+                              <TableCell><StatusBadge status={o.status} /></TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                  {totalFilteredPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                      <span className="text-xs text-muted-foreground">{orderPage * orderPageSize + 1}–{Math.min((orderPage + 1) * orderPageSize, filtered.length)} / {filtered.length}</span>
+                      <div className="flex gap-1">
+                        <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={orderPage === 0} onClick={() => setOrderPage(orderPage - 1)}>
+                          <ChevronRight className="w-3.5 h-3.5 rtl:rotate-180" />
+                        </Button>
+                        <Button variant="outline" size="sm" className="h-8 w-8 p-0" disabled={orderPage >= totalFilteredPages - 1} onClick={() => setOrderPage(orderPage + 1)}>
+                          <ChevronLeft className="w-3.5 h-3.5 rtl:rotate-180" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              );
+            })()}
           </CardContent>
         </Card>
 
         <div className="space-y-3">
           <Card className="shadow-sm border-0 bg-gradient-to-br from-emerald-50 to-emerald-100/50 dark:from-emerald-950/30 dark:to-emerald-900/20">
+            <div className="h-1 bg-gradient-to-r from-emerald-500 to-green-500 rounded-t-xl" />
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-3 rounded-xl bg-emerald-500 text-white"><CheckCircle2 className="w-5 h-5" /></div>
               <div><p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">{t("dashboard.lowRisk")}</p>
-              <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">{Math.round((success) * total / 100) || 0}</p></div>
+              <p className="text-2xl font-bold text-emerald-900 dark:text-emerald-100">{analytics?.successfulOrders ?? 0}</p></div>
             </CardContent>
           </Card>
           <Card className="shadow-sm border-0 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/30 dark:to-blue-900/20">
+            <div className="h-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-t-xl" />
             <CardContent className="p-4 flex items-center gap-4">
               <div className="p-3 rounded-xl bg-blue-500 text-white"><FileText className="w-5 h-5" /></div>
               <div><p className="text-xs text-blue-700 dark:text-blue-300 font-medium">{t("sidebar.reports")}</p>
